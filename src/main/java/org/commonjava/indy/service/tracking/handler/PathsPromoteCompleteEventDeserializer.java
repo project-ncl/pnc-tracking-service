@@ -18,13 +18,10 @@ package org.commonjava.indy.service.tracking.handler;
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
 import org.commonjava.event.promote.PathsPromoteCompleteEvent;
 
-public class PathsPromoteCompleteEventDeserializer
-                extends ObjectMapperDeserializer<PathsPromoteCompleteEvent>
-{
+public class PathsPromoteCompleteEventDeserializer extends ObjectMapperDeserializer<PathsPromoteCompleteEvent> {
 
-    public PathsPromoteCompleteEventDeserializer()
-    {
-        super( PathsPromoteCompleteEvent.class );
+    public PathsPromoteCompleteEventDeserializer() {
+        super(PathsPromoteCompleteEvent.class);
     }
 
 }

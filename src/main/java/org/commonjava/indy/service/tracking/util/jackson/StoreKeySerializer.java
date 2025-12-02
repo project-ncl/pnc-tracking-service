@@ -22,18 +22,14 @@ import org.commonjava.indy.service.tracking.model.StoreKey;
 
 import java.io.IOException;
 
-public final class StoreKeySerializer
-                extends StdSerializer<StoreKey>
-{
-    public StoreKeySerializer()
-    {
-        super( StoreKey.class );
+public final class StoreKeySerializer extends StdSerializer<StoreKey> {
+    public StoreKeySerializer() {
+        super(StoreKey.class);
     }
 
     @Override
-    public void serialize( final StoreKey key, final JsonGenerator generator, final SerializerProvider provider )
-                    throws IOException
-    {
-        generator.writeString( key.toString() );
+    public void serialize(final StoreKey key, final JsonGenerator generator, final SerializerProvider provider)
+            throws IOException {
+        generator.writeString(key.toString());
     }
 }

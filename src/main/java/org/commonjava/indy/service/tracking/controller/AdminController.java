@@ -61,13 +61,12 @@ import org.commonjava.indy.service.tracking.client.storage.StorageBatchDeleteReq
 import org.commonjava.indy.service.tracking.client.storage.StorageService;
 
 @ApplicationScoped
-public class AdminController
-{
+public class AdminController {
     public static final String FOLO_DIR = "folo";
 
     public static final String FOLO_SEALED_ZIP = "folo-sealed.zip";
 
-    private final Logger logger = LoggerFactory.getLogger( getClass() );
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
     @RestClient
@@ -87,327 +86,285 @@ public class AdminController
     @Inject
     private CassandraTrackingQuery recordManager;
 
-    protected AdminController()
-    {
+    protected AdminController() {
     }
 
-    public AdminController( final CassandraTrackingQuery recordManager )
-    {
+    public AdminController(final CassandraTrackingQuery recordManager) {
         this.recordManager = recordManager;
     }
 
-    public TrackedContentDTO seal( final String id, final String baseUrl )
-    {
-        TrackingKey tk = new TrackingKey( id );
-        return constructContentDTO( recordManager.seal( tk ), baseUrl );
+    public TrackedContentDTO seal(final String id, final String baseUrl) {
+        TrackingKey tk = new TrackingKey(id);
+        return constructContentDTO(recordManager.seal(tk), baseUrl);
     }
 
-    public void importRecordZip( InputStream stream ) throws IndyWorkflowException
-    {
-        try
-        {
-            int count = readZipInputStreamAnd( stream, ( record ) -> recordManager.addSealedRecord( record ) );
-            logger.debug( "Import records done, size: {}", count );
-        }
-        catch ( Exception e )
-        {
-            throw new IndyWorkflowException( "Failed to import zip file", e );
+    public void importRecordZip(InputStream stream) throws IndyWorkflowException {
+        try {
+            int count = readZipInputStreamAnd(stream, (record) -> recordManager.addSealedRecord(record));
+            logger.debug("Import records done, size: {}", count);
+        } catch (Exception e) {
+            throw new IndyWorkflowException("Failed to import zip file", e);
         }
     }
 
-    public File renderReportZip() throws IndyWorkflowException
-    {
+    public File renderReportZip() throws IndyWorkflowException {
         Set<TrackedContent> sealed = recordManager.getSealed(); // only care about sealed records
-        try
-        {
-            File file = Paths.get( config.baseDir().getAbsolutePath(), FOLO_DIR, FOLO_SEALED_ZIP ).toFile();
-            if ( file.exists() )
-            {
+        try {
+            File file = Paths.get(config.baseDir().getAbsolutePath(), FOLO_DIR, FOLO_SEALED_ZIP).toFile();
+            if (file.exists()) {
                 file.delete();
             }
             file.getParentFile().mkdirs(); // make dirs if not exist
 
-            zipTrackedContent( file, sealed );
+            zipTrackedContent(file, sealed);
 
             return file;
-        }
-        catch ( IOException e )
-        {
-            throw new IndyWorkflowException( "Failed to create zip file", e );
+        } catch (IOException e) {
+            throw new IndyWorkflowException("Failed to create zip file", e);
         }
     }
 
-    public TrackedContentDTO getRecord( final String id, String baseUrl ) throws IndyWorkflowException
-    {
-        final TrackingKey tk = new TrackingKey( id );
-        return constructContentDTO( recordManager.get( tk ), baseUrl );
+    public TrackedContentDTO getRecord(final String id, String baseUrl) throws IndyWorkflowException {
+        final TrackingKey tk = new TrackingKey(id);
+        return constructContentDTO(recordManager.get(tk), baseUrl);
     }
 
-    public TrackedContentDTO getLegacyRecord( final String id, String baseUrl ) throws IndyWorkflowException
-    {
-        final TrackingKey tk = new TrackingKey( id );
-        return constructContentDTO( recordManager.getLegacy( tk ), baseUrl );
+    public TrackedContentDTO getLegacyRecord(final String id, String baseUrl) throws IndyWorkflowException {
+        final TrackingKey tk = new TrackingKey(id);
+        return constructContentDTO(recordManager.getLegacy(tk), baseUrl);
     }
 
-    public void clearRecord( final String id ) throws ContentException
-    {
-        final TrackingKey tk = new TrackingKey( id );
-        recordManager.delete( tk );
+    public void clearRecord(final String id) throws ContentException {
+        final TrackingKey tk = new TrackingKey(id);
+        recordManager.delete(tk);
     }
 
-    private TrackedContentDTO constructContentDTO( final TrackedContent content, final String baseUrl )
-    {
-        if ( content == null )
-        {
+    private TrackedContentDTO constructContentDTO(final TrackedContent content, final String baseUrl) {
+        if (content == null) {
             return null;
         }
         final Set<TrackedContentEntryDTO> uploads = new TreeSet<>();
-        for ( TrackedContentEntry entry : content.getUploads() )
-        {
-            uploads.add( constructContentEntryDTO( entry, baseUrl ) );
+        for (TrackedContentEntry entry : content.getUploads()) {
+            uploads.add(constructContentEntryDTO(entry, baseUrl));
         }
 
         final Set<TrackedContentEntryDTO> downloads = new TreeSet<>();
-        for ( TrackedContentEntry entry : content.getDownloads() )
-        {
-            downloads.add( constructContentEntryDTO( entry, baseUrl ) );
+        for (TrackedContentEntry entry : content.getDownloads()) {
+            downloads.add(constructContentEntryDTO(entry, baseUrl));
         }
-        return new TrackedContentDTO( content.getKey(), uploads, downloads );
+        return new TrackedContentDTO(content.getKey(), uploads, downloads);
     }
 
-    private TrackedContentEntryDTO constructContentEntryDTO( final TrackedContentEntry entry, String apiBaseUrl )
-    {
-        if ( entry == null )
-        {
+    private TrackedContentEntryDTO constructContentEntryDTO(final TrackedContentEntry entry, String apiBaseUrl) {
+        if (entry == null) {
             return null;
         }
-        TrackedContentEntryDTO entryDTO =
-                        new TrackedContentEntryDTO( entry.getStoreKey(), entry.getAccessChannel(), entry.getPath() );
+        TrackedContentEntryDTO entryDTO = new TrackedContentEntryDTO(
+                entry.getStoreKey(),
+                entry.getAccessChannel(),
+                entry.getPath());
 
-        try
-        {
-            entryDTO.setLocalUrl( UrlUtils.buildUrl( apiBaseUrl, "content", entryDTO.getStoreKey().getPackageType(),
-                                                     entryDTO.getStoreKey().getType().singularEndpointName(),
-                                                     entryDTO.getStoreKey().getName(), entryDTO.getPath() ) );
-        }
-        catch ( MalformedURLException e )
-        {
-            logger.warn( String.format( "Cannot formulate local URL!\n  Base URL: %s"
-                                                        + "\n  Store: %s\n  Path: %s\n  Record: %s\n  Reason: %s",
-                                        apiBaseUrl, entry.getStoreKey(), entry.getPath(), entry.getTrackingKey(),
-                                        e.getMessage() ), e );
+        try {
+            entryDTO.setLocalUrl(
+                    UrlUtils.buildUrl(
+                            apiBaseUrl,
+                            "content",
+                            entryDTO.getStoreKey().getPackageType(),
+                            entryDTO.getStoreKey().getType().singularEndpointName(),
+                            entryDTO.getStoreKey().getName(),
+                            entryDTO.getPath()));
+        } catch (MalformedURLException e) {
+            logger.warn(
+                    String.format(
+                            "Cannot formulate local URL!\n  Base URL: %s"
+                                    + "\n  Store: %s\n  Path: %s\n  Record: %s\n  Reason: %s",
+                            apiBaseUrl,
+                            entry.getStoreKey(),
+                            entry.getPath(),
+                            entry.getTrackingKey(),
+                            e.getMessage()),
+                    e);
         }
 
-        entryDTO.setOriginUrl( entry.getOriginUrl() );
-        entryDTO.setMd5( entry.getMd5() );
-        entryDTO.setSha1( entry.getSha1() );
-        entryDTO.setSha256( entry.getSha256() );
-        entryDTO.setSize( entry.getSize() );
-        entryDTO.setTimestamps( entry.getTimestamps() );
+        entryDTO.setOriginUrl(entry.getOriginUrl());
+        entryDTO.setMd5(entry.getMd5());
+        entryDTO.setSha1(entry.getSha1());
+        entryDTO.setSha256(entry.getSha256());
+        entryDTO.setSize(entry.getSize());
+        entryDTO.setTimestamps(entry.getTimestamps());
         return entryDTO;
     }
 
-    private Set<ContentTransferDTO> constructTransferDTOSet( final Set<TrackedContentEntry> entries )
-    {
-        if ( entries == null )
-        {
+    private Set<ContentTransferDTO> constructTransferDTOSet(final Set<TrackedContentEntry> entries) {
+        if (entries == null) {
             return null;
         }
         Set<ContentTransferDTO> cut_entries = new HashSet<>();
-        for ( TrackedContentEntry entry : entries )
-        {
-            ContentTransferDTO cut_entry = new ContentTransferDTO( entry.getStoreKey(), entry.getTrackingKey(),
-                                                                   entry.getAccessChannel(), entry.getPath(),
-                                                                   entry.getOriginUrl(), entry.getEffect() );
-            cut_entries.add( cut_entry );
+        for (TrackedContentEntry entry : entries) {
+            ContentTransferDTO cut_entry = new ContentTransferDTO(
+                    entry.getStoreKey(),
+                    entry.getTrackingKey(),
+                    entry.getAccessChannel(),
+                    entry.getPath(),
+                    entry.getOriginUrl(),
+                    entry.getEffect());
+            cut_entries.add(cut_entry);
         }
 
         return cut_entries;
     }
 
-    private ContentDTO convertToContentDTO( final TrackedContent record )
-    {
+    private ContentDTO convertToContentDTO(final TrackedContent record) {
         ContentDTO dto = new ContentDTO();
-        dto.setKey( record.getKey() );
+        dto.setKey(record.getKey());
         Set<ContentEntryDTO> uploads = new HashSet<>();
         Set<ContentEntryDTO> downloads = new HashSet<>();
-        for ( TrackedContentEntry entry : record.getUploads() )
-        {
-            uploads.add( convertToCOntentEntryDTO( entry ) );
+        for (TrackedContentEntry entry : record.getUploads()) {
+            uploads.add(convertToCOntentEntryDTO(entry));
         }
-        for ( TrackedContentEntry entry : record.getDownloads() )
-        {
-            downloads.add( convertToCOntentEntryDTO( entry ) );
+        for (TrackedContentEntry entry : record.getDownloads()) {
+            downloads.add(convertToCOntentEntryDTO(entry));
         }
-        dto.setUploads( uploads );
-        dto.getDownloads( downloads );
+        dto.setUploads(uploads);
+        dto.getDownloads(downloads);
         return dto;
     }
 
-    private ContentEntryDTO convertToCOntentEntryDTO( TrackedContentEntry entry )
-    {
+    private ContentEntryDTO convertToCOntentEntryDTO(TrackedContentEntry entry) {
         ContentEntryDTO entryDTO = new ContentEntryDTO();
-        entryDTO.setStoreKey( entry.getStoreKey() );
-        entryDTO.setPath( entry.getPath() );
+        entryDTO.setStoreKey(entry.getStoreKey());
+        entryDTO.setPath(entry.getPath());
         return entryDTO;
     }
 
-    public TrackingIdsDTO getLegacyTrackingIds()
-    {
-        logger.info( "Get legacy folo ids" );
+    public TrackingIdsDTO getLegacyTrackingIds() {
+        logger.info("Get legacy folo ids");
         TrackingIdsDTO ret = null;
         Set<String> sealed = recordManager.getLegacyTrackingKeys()
-                                          .stream()
-                                          .map( TrackingKey::getId )
-                                          .collect( Collectors.toSet() );
-        if ( sealed != null )
-        {
+                .stream()
+                .map(TrackingKey::getId)
+                .collect(Collectors.toSet());
+        if (sealed != null) {
             ret = new TrackingIdsDTO();
-            ret.setSealed( sealed );
+            ret.setSealed(sealed);
         }
         return ret;
     }
 
-    public TrackingIdsDTO getTrackingIds( final Set<Constants.TRACKING_TYPE> types )
-    {
+    public TrackingIdsDTO getTrackingIds(final Set<Constants.TRACKING_TYPE> types) {
 
         Set<String> inProgress = null;
-        if ( types.contains( Constants.TRACKING_TYPE.IN_PROGRESS ) )
-        {
+        if (types.contains(Constants.TRACKING_TYPE.IN_PROGRESS)) {
             inProgress = recordManager.getInProgressTrackingKey()
-                                      .stream()
-                                      .map( TrackingKey::getId )
-                                      .collect( Collectors.toSet() );
+                    .stream()
+                    .map(TrackingKey::getId)
+                    .collect(Collectors.toSet());
         }
 
         Set<String> sealed = null;
-        if ( types.contains( Constants.TRACKING_TYPE.SEALED ) )
-        {
-            sealed = recordManager.getSealedTrackingKey()
-                                  .stream()
-                                  .map( TrackingKey::getId )
-                                  .collect( Collectors.toSet() );
+        if (types.contains(Constants.TRACKING_TYPE.SEALED)) {
+            sealed = recordManager.getSealedTrackingKey().stream().map(TrackingKey::getId).collect(Collectors.toSet());
         }
 
-        if ( ( inProgress != null && !inProgress.isEmpty() ) || ( sealed != null && !sealed.isEmpty() ) )
-        {
-            return new TrackingIdsDTO( inProgress, sealed );
+        if ((inProgress != null && !inProgress.isEmpty()) || (sealed != null && !sealed.isEmpty())) {
+            return new TrackingIdsDTO(inProgress, sealed);
         }
         return null;
     }
 
-    public TrackedContentDTO recalculateRecord( final String id, final String baseUrl ) throws IndyWorkflowException
-    {
-        TrackingKey trackingKey = new TrackingKey( id );
-        TrackedContent record = recordManager.get( trackingKey );
+    public TrackedContentDTO recalculateRecord(final String id, final String baseUrl) throws IndyWorkflowException {
+        TrackingKey trackingKey = new TrackingKey(id);
+        TrackedContent record = recordManager.get(trackingKey);
 
-        if ( record == null )
-        {
+        if (record == null) {
             return null;
         }
 
-        AtomicBoolean failed = new AtomicBoolean( false );
+        AtomicBoolean failed = new AtomicBoolean(false);
 
-        Set<TrackedContentEntry> recalculatedUploads = recalculateEntrySet( record.getUploads(), failed );
+        Set<TrackedContentEntry> recalculatedUploads = recalculateEntrySet(record.getUploads(), failed);
         Set<TrackedContentEntry> recalculatedDownloads = null;
-        if ( !failed.get() )
-        {
-            recalculatedDownloads = recalculateEntrySet( record.getDownloads(), failed );
+        if (!failed.get()) {
+            recalculatedDownloads = recalculateEntrySet(record.getDownloads(), failed);
         }
 
-        if ( failed.get() )
-        {
+        if (failed.get()) {
             throw new IndyWorkflowException(
-                            "Failed to recalculate tracking record: %s. See Indy logs for more information", id );
+                    "Failed to recalculate tracking record: %s. See Indy logs for more information",
+                    id);
         }
 
-        TrackedContent recalculated = new TrackedContent( record.getKey(), recalculatedUploads, recalculatedDownloads );
-        recordManager.replaceTrackingRecord( recalculated );
+        TrackedContent recalculated = new TrackedContent(record.getKey(), recalculatedUploads, recalculatedDownloads);
+        recordManager.replaceTrackingRecord(recalculated);
 
-        return constructContentDTO( recalculated, baseUrl );
+        return constructContentDTO(recalculated, baseUrl);
     }
 
-    private Set<TrackedContentEntry> recalculateEntrySet( final Set<TrackedContentEntry> entries,
-                                                          final AtomicBoolean failed )
-    {
-        Set<ContentTransferDTO> transfer_entries = constructTransferDTOSet( entries );
-        try (Response response = contentService.recalculateEntrySet( transfer_entries ))
-        {
-            return (Set<TrackedContentEntry>) response.readEntity( DTOStreamingOutput.class ).getDto();
-        }
-        catch ( Exception e )
-        {
-            failed.set( true );
+    private Set<TrackedContentEntry> recalculateEntrySet(
+            final Set<TrackedContentEntry> entries,
+            final AtomicBoolean failed) {
+        Set<ContentTransferDTO> transfer_entries = constructTransferDTOSet(entries);
+        try (Response response = contentService.recalculateEntrySet(transfer_entries)) {
+            return (Set<TrackedContentEntry>) response.readEntity(DTOStreamingOutput.class).getDto();
+        } catch (Exception e) {
+            failed.set(true);
             return null;
         }
     }
 
-    public File getZipRepository( String id )
-    {
-        final TrackingKey tk = new TrackingKey( id );
-        final TrackedContent record = recordManager.get( tk );
-        ContentDTO dto = convertToContentDTO( record );
-        return contentService.getZipRepository( dto );
+    public File getZipRepository(String id) {
+        final TrackingKey tk = new TrackingKey(id);
+        final TrackedContent record = recordManager.get(tk);
+        ContentDTO dto = convertToContentDTO(record);
+        return contentService.getZipRepository(dto);
     }
 
-    public boolean recordArtifact( TrackedContentEntry contentEntry )
-    {
+    public boolean recordArtifact(TrackedContentEntry contentEntry) {
         boolean isRecorded = false;
-        try
-        {
-            isRecorded = recordManager.recordArtifact( contentEntry );
-        }
-        catch ( final ContentException | IndyWorkflowException e )
-        {
-            logger.error( "Failed to record entry: {}.", contentEntry, e );
+        try {
+            isRecorded = recordManager.recordArtifact(contentEntry);
+        } catch (final ContentException | IndyWorkflowException e) {
+            logger.error("Failed to record entry: {}.", contentEntry, e);
         }
         return isRecorded;
     }
 
     /**
-     * Additional check for batch deletion. It retrieves the promotion record by the trackingID
-     * to find the target store associated with the promotion. If the target store does not match given store,
-     * return failed delete validation result.
+     * Additional check for batch deletion. It retrieves the promotion record by the trackingID to find the target store
+     * associated with the promotion. If the target store does not match given store, return failed delete validation
+     * result.
      */
-    public boolean deletionAdditionalGuardCheck( BatchDeleteRequest deleteRequest )
-    {
-        if ( !config.deletionAdditionalGuardCheck() )
-        {
+    public boolean deletionAdditionalGuardCheck(BatchDeleteRequest deleteRequest) {
+        if (!config.deletionAdditionalGuardCheck()) {
             return true; // as passed if guard check is not enabled
         }
 
         String trackingID = deleteRequest.getTrackingID();
         final StoreKey givenStore = deleteRequest.getStoreKey();
         final AtomicBoolean isOk = new AtomicBoolean(false);
-        try
-        {
-            Response resp = promoteService.getPromoteRecords( trackingID );
-            if (!isSuccess(resp))
-            {
-                if ( resp.getStatus() == Response.Status.NOT_FOUND.getStatusCode() )
-                {
+        try {
+            Response resp = promoteService.getPromoteRecords(trackingID);
+            if (!isSuccess(resp)) {
+                if (resp.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                     // Record not exists. It is common because the guide check can not cover old artifacts. Old
                     // artifacts were promoted without tracking. We just print a log and allow it.
                     logger.info("Promote tracking record not found but allow deletion, trackingID: {}", trackingID);
                     return true;
                 }
-                logger.warn( "Deletion guard check failed, status:" + resp.getStatus() );
+                logger.warn("Deletion guard check failed, status:" + resp.getStatus());
                 return false;
             }
             PathsPromoteTrackingRecords promoteTrackingRecords = resp.readEntity(PathsPromoteTrackingRecords.class);
-            Map<String, PathsPromoteTrackingRecords.PathsPromoteResult> resultMap = promoteTrackingRecords.getResultMap();
-            if ( resultMap != null )
-            {
-                resultMap.forEach( (k,v) -> {
-                    if (v.getRequest().getTarget().equals(givenStore))
-                    {
+            Map<String, PathsPromoteTrackingRecords.PathsPromoteResult> resultMap = promoteTrackingRecords
+                    .getResultMap();
+            if (resultMap != null) {
+                resultMap.forEach((k, v) -> {
+                    if (v.getRequest().getTarget().equals(givenStore)) {
                         isOk.set(true); // set true if any match found
                     }
                 });
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             logger.warn("Deletion guard check failed", e);
             return false;
         }
@@ -418,19 +375,20 @@ public class AdminController
     /**
      * Post-action after successful batch delete: cleans up empty parent folders.
      * <p>
-     * For each deleted path, collects its immediate parent folder (one level up).
-     * Then calls the storage service to clean up these folders, relying on the
-     * storage API to handle ancestor folders as needed.
+     * For each deleted path, collects its immediate parent folder (one level up). Then calls the storage service to
+     * clean up these folders, relying on the storage API to handle ancestor folders as needed.
      * </p>
      *
      * @param trackingID
      * @param filesystem the target filesystem/storeKey as a string
      * @param paths the set of deleted file paths
      */
-    public void cleanupEmptyFolders( String trackingID, String filesystem, Set<String> paths )
-    {
-        logger.info("Post-action: cleanupEmptyFolder, trackingID={}, filesystem={}, paths={}",
-                    trackingID, filesystem, paths);
+    public void cleanupEmptyFolders(String trackingID, String filesystem, Set<String> paths) {
+        logger.info(
+                "Post-action: cleanupEmptyFolder, trackingID={}, filesystem={}, paths={}",
+                trackingID,
+                filesystem,
+                paths);
         if (paths == null || paths.isEmpty()) {
             logger.info("No paths to process for cleanup.");
             return;
@@ -444,7 +402,7 @@ public class AdminController
             }
         }
         StorageBatchDeleteRequest req = new StorageBatchDeleteRequest();
-        req.setInternalId( trackingID );
+        req.setInternalId(trackingID);
         req.setFilesystem(filesystem);
         req.setPaths(folders);
         try {
@@ -456,7 +414,6 @@ public class AdminController
     }
 
     private boolean isSuccess(Response resp) {
-        return Response.Status.fromStatusCode(resp.getStatus()).getFamily()
-                == Response.Status.Family.SUCCESSFUL;
+        return Response.Status.fromStatusCode(resp.getStatus()).getFamily() == Response.Status.Family.SUCCESSFUL;
     }
 }

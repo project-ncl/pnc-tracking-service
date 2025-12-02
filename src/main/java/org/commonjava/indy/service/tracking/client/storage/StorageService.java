@@ -36,4 +36,4 @@ public interface StorageService {
     @Path("/maint/folders/empty")
     @Consumes(APPLICATION_JSON)
     Response cleanupEmptyFolders(StorageBatchDeleteRequest request);
-} 
+}

@@ -19,7 +19,6 @@ import org.commonjava.indy.service.tracking.model.TrackedContentEntry;
 
 import java.util.Set;
 
-public class TrackedContentEntrySetDTO
-{
+public class TrackedContentEntrySetDTO {
     public Set<TrackedContentEntry> entries;
 }

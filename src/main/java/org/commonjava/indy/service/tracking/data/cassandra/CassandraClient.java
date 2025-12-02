@@ -31,9 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @ApplicationScoped
-public class CassandraClient
-{
-    private final Logger logger = LoggerFactory.getLogger( getClass() );
+public class CassandraClient {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     final private Map<String, Session> sessions = new ConcurrentHashMap<>();
 
@@ -48,86 +47,70 @@ public class CassandraClient
 
     private Cluster cluster;
 
-    public CassandraClient()
-    {
+    public CassandraClient() {
     }
 
-    public CassandraClient( CassandraConfiguration config )
-    {
+    public CassandraClient(CassandraConfiguration config) {
         this.config = config;
         init();
     }
 
     @PostConstruct
-    public void init()
-    {
-        if ( !config.isEnabled() )
-        {
-            logger.info( "Cassandra client not enabled" );
+    public void init() {
+        if (!config.isEnabled()) {
+            logger.info("Cassandra client not enabled");
             return;
         }
 
         host = config.getCassandraHost();
         port = config.getCassandraPort();
         SocketOptions socketOptions = new SocketOptions();
-        socketOptions.setConnectTimeoutMillis( config.getConnectTimeoutMillis() );
-        socketOptions.setReadTimeoutMillis( config.getReadTimeoutMillis() );
+        socketOptions.setConnectTimeoutMillis(config.getConnectTimeoutMillis());
+        socketOptions.setReadTimeoutMillis(config.getReadTimeoutMillis());
         Cluster.Builder builder = Cluster.builder()
-                                         .withoutJMXReporting()
-                                         .withReconnectionPolicy(
-                                                 new ConstantReconnectionPolicy( config.getConstantDelayMs() ) )
-                                         .withRetryPolicy( new ConfigurableRetryPolicy( config.getReadRetries(),
-                                                                                        config.getWriteRetries() ) )
-                                         .addContactPoint( host )
-                                         .withPort( port )
-                                         .withSocketOptions( socketOptions );
+                .withoutJMXReporting()
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(config.getConstantDelayMs()))
+                .withRetryPolicy(new ConfigurableRetryPolicy(config.getReadRetries(), config.getWriteRetries()))
+                .addContactPoint(host)
+                .withPort(port)
+                .withSocketOptions(socketOptions);
         username = config.getCassandraUser();
         String password = config.getCassandraPass();
-        if ( isNotBlank( username ) && isNotBlank( password ) )
-        {
-            logger.info( "Build with credentials, user: {}, pass: ****", username );
-            builder.withCredentials( username, password );
+        if (isNotBlank(username) && isNotBlank(password)) {
+            logger.info("Build with credentials, user: {}, pass: ****", username);
+            builder.withCredentials(username, password);
         }
         cluster = builder.build();
     }
 
-    public Session getSession( String keyspace )
-    {
-        if ( !config.isEnabled() )
-        {
-            logger.info( "Cassandra client not enabled" );
+    public Session getSession(String keyspace) {
+        if (!config.isEnabled()) {
+            logger.info("Cassandra client not enabled");
             return null;
         }
 
-        return sessions.computeIfAbsent( keyspace, key -> {
-            logger.info( "Connect to Cassandra, host: {}, port: {}, user: {}, keyspace: {}", host, port, username,
-                         key );
-            try
-            {
+        return sessions.computeIfAbsent(keyspace, key -> {
+            logger.info("Connect to Cassandra, host: {}, port: {}, user: {}, keyspace: {}", host, port, username, key);
+            try {
                 return cluster.connect();
-            }
-            catch ( Exception e )
-            {
-                logger.error( "Connecting to Cassandra failed", e );
+            } catch (Exception e) {
+                logger.error("Connecting to Cassandra failed", e);
             }
             return null;
-        } );
+        });
     }
 
-    public void close()
-    {
-        if ( cluster != null )
-        {
-            logger.info( "Close cassandra client" );
-            sessions.forEach( ( key, value ) -> value.close() );
+    public void close() {
+        if (cluster != null) {
+            logger.info("Close cassandra client");
+            sessions.forEach((key, value) -> value.close());
             sessions.clear();
             cluster.close();
             cluster = null;
         }
     }
 
-    public Map<String, Session> getSessions()
-    {
+    public Map<String, Session> getSessions() {
         return sessions;
     }
 }

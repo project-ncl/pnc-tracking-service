@@ -17,40 +17,33 @@ package org.commonjava.indy.service.tracking.model.dto;
 
 import java.util.Set;
 
-public class TrackingIdsDTO
-{
+public class TrackingIdsDTO {
 
     private Set<String> inProgress;
 
     private Set<String> sealed;
 
-    public TrackingIdsDTO()
-    {
+    public TrackingIdsDTO() {
     }
 
-    public TrackingIdsDTO( final Set<String> inProgress, final Set<String> sealed )
-    {
+    public TrackingIdsDTO(final Set<String> inProgress, final Set<String> sealed) {
         this.inProgress = inProgress;
         this.sealed = sealed;
     }
 
-    public Set<String> getInProgress()
-    {
+    public Set<String> getInProgress() {
         return inProgress;
     }
 
-    public void setInProgress( Set<String> inProgress )
-    {
+    public void setInProgress(Set<String> inProgress) {
         this.inProgress = inProgress;
     }
 
-    public Set<String> getSealed()
-    {
+    public Set<String> getSealed() {
         return sealed;
     }
 
-    public void setSealed( Set<String> sealed )
-    {
+    public void setSealed(Set<String> sealed) {
         this.sealed = sealed;
     }
 }

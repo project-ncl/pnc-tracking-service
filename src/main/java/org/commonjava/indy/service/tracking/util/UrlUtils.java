@@ -22,73 +22,58 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public final class UrlUtils
-{
+public final class UrlUtils {
 
-    private UrlUtils()
-    {
+    private UrlUtils() {
     }
 
-    public static String buildUrl( final String baseUrl, final String... parts ) throws MalformedURLException
-    {
-        return buildUrl( baseUrl, null, parts );
+    public static String buildUrl(final String baseUrl, final String... parts) throws MalformedURLException {
+        return buildUrl(baseUrl, null, parts);
     }
 
-    public static String buildUrl( final String baseUrl, final Map<String, String> params, final String... parts )
-                    throws MalformedURLException
-    {
-        if ( parts == null || parts.length < 1 )
-        {
+    public static String buildUrl(final String baseUrl, final Map<String, String> params, final String... parts)
+            throws MalformedURLException {
+        if (parts == null || parts.length < 1) {
             return baseUrl;
         }
 
         final StringBuilder urlBuilder = new StringBuilder();
 
-        if ( parts[0] == null || !parts[0].startsWith( baseUrl ) )
-        {
-            urlBuilder.append( baseUrl );
+        if (parts[0] == null || !parts[0].startsWith(baseUrl)) {
+            urlBuilder.append(baseUrl);
         }
 
-        for ( String part : parts )
-        {
-            if ( part == null || part.trim().length() < 1 )
-            {
+        for (String part : parts) {
+            if (part == null || part.trim().length() < 1) {
                 continue;
             }
             part = part.trim();
-            if ( part.startsWith( "/" ) )
-            {
-                part = part.substring( 1 );
+            if (part.startsWith("/")) {
+                part = part.substring(1);
             }
 
-            if ( urlBuilder.length() > 0 && urlBuilder.charAt( urlBuilder.length() - 1 ) != '/' )
-            {
-                urlBuilder.append( "/" );
+            if (urlBuilder.length() > 0 && urlBuilder.charAt(urlBuilder.length() - 1) != '/') {
+                urlBuilder.append("/");
             }
 
-            urlBuilder.append( part );
+            urlBuilder.append(part);
         }
 
-        if ( params != null && !params.isEmpty() )
-        {
-            urlBuilder.append( "?" );
+        if (params != null && !params.isEmpty()) {
+            urlBuilder.append("?");
             boolean first = true;
-            for ( final Map.Entry<String, String> param : params.entrySet() )
-            {
-                if ( first )
-                {
+            for (final Map.Entry<String, String> param : params.entrySet()) {
+                if (first) {
                     first = false;
-                }
-                else
-                {
-                    urlBuilder.append( "&" );
+                } else {
+                    urlBuilder.append("&");
                 }
 
-                urlBuilder.append( param.getKey() ).append( "=" ).append( param.getValue() );
+                urlBuilder.append(param.getKey()).append("=").append(param.getValue());
             }
         }
 
-        return new URL( urlBuilder.toString() ).toExternalForm();
+        return new URL(urlBuilder.toString()).toExternalForm();
     }
 
     /**
@@ -100,57 +85,44 @@ public final class UrlUtils
      * @param charset -
      * @return -
      */
-    public static String uriDecode( String source, Charset charset )
-    {
-        if ( source == null || source.length() == 0 )
-        {
+    public static String uriDecode(String source, Charset charset) {
+        if (source == null || source.length() == 0) {
             return source;
         }
         int length = source.length();
         Charset providedCharSet = charset;
-        if ( providedCharSet == null )
-        {
+        if (providedCharSet == null) {
             providedCharSet = StandardCharsets.UTF_8;
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream( length );
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(length);
         boolean changed = false;
-        for ( int i = 0; i < length; i++ )
-        {
-            int ch = source.charAt( i );
-            if ( ch == '%' )
-            {
-                if ( i + 2 < length )
-                {
-                    char hex1 = source.charAt( i + 1 );
-                    char hex2 = source.charAt( i + 2 );
-                    int u = Character.digit( hex1, 16 );
-                    int l = Character.digit( hex2, 16 );
-                    if ( u == -1 || l == -1 )
-                    {
-                        throw new IllegalArgumentException(
-                                        "Invalid encoded sequence \"" + source.substring( i ) + "\"" );
+        for (int i = 0; i < length; i++) {
+            int ch = source.charAt(i);
+            if (ch == '%') {
+                if (i + 2 < length) {
+                    char hex1 = source.charAt(i + 1);
+                    char hex2 = source.charAt(i + 2);
+                    int u = Character.digit(hex1, 16);
+                    int l = Character.digit(hex2, 16);
+                    if (u == -1 || l == -1) {
+                        throw new IllegalArgumentException("Invalid encoded sequence \"" + source.substring(i) + "\"");
                     }
-                    baos.write( (char) ( ( u << 4 ) + l ) );
+                    baos.write((char) ((u << 4) + l));
                     i += 2;
                     changed = true;
+                } else {
+                    throw new IllegalArgumentException("Invalid encoded sequence \"" + source.substring(i) + "\"");
                 }
-                else
-                {
-                    throw new IllegalArgumentException( "Invalid encoded sequence \"" + source.substring( i ) + "\"" );
-                }
-            }
-            else
-            {
-                baos.write( ch );
+            } else {
+                baos.write(ch);
             }
         }
-        return ( changed ? baos.toString( providedCharSet ) : source );
+        return (changed ? baos.toString(providedCharSet) : source);
     }
 
-    public static String uriDecode( String source )
-    {
-        return uriDecode( source, null );
+    public static String uriDecode(String source) {
+        return uriDecode(source, null);
     }
 
 }

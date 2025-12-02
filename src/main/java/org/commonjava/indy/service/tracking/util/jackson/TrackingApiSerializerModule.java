@@ -21,32 +21,26 @@ import org.commonjava.indy.service.tracking.model.StoreKey;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class TrackingApiSerializerModule
-                extends SimpleModule
-{
+public class TrackingApiSerializerModule extends SimpleModule {
 
     private static final long serialVersionUID = 1L;
 
-    public TrackingApiSerializerModule()
-    {
-        super( "Indy Tracking API" );
-        addDeserializer( StoreKey.class, new StoreKeyDeserializer() );
-        addSerializer( StoreKey.class, new StoreKeySerializer() );
+    public TrackingApiSerializerModule() {
+        super("Indy Tracking API");
+        addDeserializer(StoreKey.class, new StoreKeyDeserializer());
+        addSerializer(StoreKey.class, new StoreKeySerializer());
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return getClass().getSimpleName().hashCode() + 17;
     }
 
     @Override
-    public boolean equals( final Object other )
-    {
-        if ( other == null )
-        {
+    public boolean equals(final Object other) {
+        if (other == null) {
             return false;
         }
-        return getClass().equals( other.getClass() );
+        return getClass().equals(other.getClass());
     }
 }

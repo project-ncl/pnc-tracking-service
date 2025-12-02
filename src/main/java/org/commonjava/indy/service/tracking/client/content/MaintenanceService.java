@@ -23,13 +23,12 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 
-@Path( "/api/admin/maint/content" )
-@RegisterRestClient( configKey = "content-service-api" )
-@RegisterProvider( CustomClientRequestFilter.class )
-public interface MaintenanceService
-{
+@Path("/api/admin/maint/content")
+@RegisterRestClient(configKey = "content-service-api")
+@RegisterProvider(CustomClientRequestFilter.class)
+public interface MaintenanceService {
     @POST
-    @Path( "/batch/delete" )
-    Response doDelete( BatchDeleteRequest request );
+    @Path("/batch/delete")
+    Response doDelete(BatchDeleteRequest request);
 
 }

@@ -24,29 +24,24 @@ import org.commonjava.indy.service.tracking.model.StoreType;
 
 import java.io.IOException;
 
-public final class StoreKeyDeserializer
-                extends StdDeserializer<StoreKey>
-{
+public final class StoreKeyDeserializer extends StdDeserializer<StoreKey> {
     private static final long serialVersionUID = 1L;
 
-    public StoreKeyDeserializer()
-    {
-        super( StoreKey.class );
+    public StoreKeyDeserializer() {
+        super(StoreKey.class);
     }
 
     @Override
-    public StoreKey deserialize( final JsonParser parser, final DeserializationContext context ) throws IOException
-    {
+    public StoreKey deserialize(final JsonParser parser, final DeserializationContext context) throws IOException {
         final String keyStr = parser.getText();
-        if ( keyStr != null && keyStr.trim().equals( "{" ) )
-        {
-            JsonNode node = parser.getCodec().readTree( parser );
-            String pkgType = node.get( "packageType" ).textValue();
-            String type = node.get( "type" ).textValue();
-            String name = node.get( "name" ).textValue();
-            return new StoreKey( pkgType, StoreType.get( type ), name );
+        if (keyStr != null && keyStr.trim().equals("{")) {
+            JsonNode node = parser.getCodec().readTree(parser);
+            String pkgType = node.get("packageType").textValue();
+            String type = node.get("type").textValue();
+            String name = node.get("name").textValue();
+            return new StoreKey(pkgType, StoreType.get(type), name);
         }
-        return StoreKey.fromString( keyStr );
+        return StoreKey.fromString(keyStr);
     }
 
 }

@@ -15,7 +15,6 @@
  */
 package org.commonjava.indy.service.tracking.model;
 
-public enum StoreEffect
-{
+public enum StoreEffect {
     UPLOAD, DOWNLOAD
 }

@@ -36,61 +36,53 @@ import java.util.Set;
  * This customizer is used to init the jackson object mapper with indy customized features and modules
  */
 @Singleton
-public class IndyJacksonCustomizer
-                implements ObjectMapperCustomizer
-{
-    private final Logger logger = LoggerFactory.getLogger( getClass() );
+public class IndyJacksonCustomizer implements ObjectMapperCustomizer {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
     Instance<Module> injectedModules;
 
     @Override
-    public void customize( ObjectMapper mapper )
-    {
-        mapper.setSerializationInclusion( JsonInclude.Include.NON_EMPTY );
-        mapper.configure( JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, true );
-        mapper.configure( DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true );
+    public void customize(ObjectMapper mapper) {
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, true);
+        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 
-        mapper.enable( SerializationFeature.INDENT_OUTPUT, SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID );
-        mapper.enable( MapperFeature.AUTO_DETECT_FIELDS );
-        //        mapper.disable( MapperFeature.AUTO_DETECT_GETTERS );
+        mapper.enable(SerializationFeature.INDENT_OUTPUT, SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID);
+        mapper.enable(MapperFeature.AUTO_DETECT_FIELDS);
+        // mapper.disable( MapperFeature.AUTO_DETECT_GETTERS );
 
-        mapper.disable( SerializationFeature.WRITE_NULL_MAP_VALUES, SerializationFeature.WRITE_EMPTY_JSON_ARRAYS );
-        mapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
-        //        mapper.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
+        mapper.disable(SerializationFeature.WRITE_NULL_MAP_VALUES, SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        // mapper.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
 
-        injectSingle( mapper, new TrackingApiSerializerModule() );
+        injectSingle(mapper, new TrackingApiSerializerModule());
 
-        inject( mapper, injectedModules );
+        inject(mapper, injectedModules);
 
     }
 
-    private void inject( ObjectMapper mapper, Iterable<Module> modules )
-    {
+    private void inject(ObjectMapper mapper, Iterable<Module> modules) {
         Set<Module> injected = new HashSet<>();
 
-        Logger logger = LoggerFactory.getLogger( getClass() );
-        if ( modules != null )
-        {
-            for ( final Module module : modules )
-            {
-                injected.add( module );
+        Logger logger = LoggerFactory.getLogger(getClass());
+        if (modules != null) {
+            for (final Module module : modules) {
+                injected.add(module);
             }
         }
 
-        for ( Module module : injected )
-        {
-            injectSingle( mapper, module );
+        for (Module module : injected) {
+            injectSingle(mapper, module);
         }
 
     }
 
-    private void injectSingle( ObjectMapper mapper, Module module )
-    {
-        Logger logger = LoggerFactory.getLogger( getClass() );
-        logger.info( "Registering object-mapper module: {}", module );
+    private void injectSingle(ObjectMapper mapper, Module module) {
+        Logger logger = LoggerFactory.getLogger(getClass());
+        logger.info("Registering object-mapper module: {}", module);
 
-        mapper.registerModule( module );
+        mapper.registerModule(module);
     }
 
 }

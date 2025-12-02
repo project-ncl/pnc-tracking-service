@@ -32,52 +32,43 @@ import static org.commonjava.indy.service.tracking.data.metrics.NameUtils.name;
 import static org.commonjava.indy.service.tracking.data.metrics.TraceConstant.EXCEPTION;
 
 @ApplicationScoped
-public class TraceManager
-{
+public class TraceManager {
     public static final String DEFAULT = "default";
 
     public static final String INDY_METRIC_ISPN = "indy.ispn";
 
-    private final Logger logger = LoggerFactory.getLogger( this.getClass() );
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Tracer tracer;
 
     @Inject
-    public TraceManager( Tracer tracer )
-    {
+    public TraceManager(Tracer tracer) {
         this.tracer = tracer;
     }
 
-    public <T> T wrapWithStandardMetrics( final Supplier<T> method, final Supplier<String> classifier )
-    {
-        return wrapWithStandardMetrics( ( span ) -> method.get(), classifier );
+    public <T> T wrapWithStandardMetrics(final Supplier<T> method, final Supplier<String> classifier) {
+        return wrapWithStandardMetrics((span) -> method.get(), classifier);
     }
 
-    public <T> T wrapWithStandardMetrics( final Function<Span, T> method, final Supplier<String> classifier )
-    {
+    public <T> T wrapWithStandardMetrics(final Function<Span, T> method, final Supplier<String> classifier) {
         String spanName = classifier.get();
 
-        String errorName = name( spanName, EXCEPTION );
+        String errorName = name(spanName, EXCEPTION);
 
-        logger.trace( "START: {} ({})", spanName, System.currentTimeMillis() );
-        Span span = tracer.spanBuilder( spanName ).setSpanKind( SpanKind.SERVER ).startSpan();
-        try (Scope ignored = span.makeCurrent())
-        {
-            T result = method.apply( span );
-            span.setStatus( StatusCode.OK );
+        logger.trace("START: {} ({})", spanName, System.currentTimeMillis());
+        Span span = tracer.spanBuilder(spanName).setSpanKind(SpanKind.SERVER).startSpan();
+        try (Scope ignored = span.makeCurrent()) {
+            T result = method.apply(span);
+            span.setStatus(StatusCode.OK);
             return result;
-        }
-        catch ( Throwable e )
-        {
-            String eClassName = name( spanName, EXCEPTION, e.getClass().getSimpleName() );
-            span.setStatus( StatusCode.ERROR );
-            span.recordException( e );
-            span.setAttribute( errorName, eClassName );
+        } catch (Throwable e) {
+            String eClassName = name(spanName, EXCEPTION, e.getClass().getSimpleName());
+            span.setStatus(StatusCode.ERROR);
+            span.recordException(e);
+            span.setAttribute(errorName, eClassName);
 
             throw e;
-        }
-        finally
-        {
+        } finally {
             span.end();
         }
 

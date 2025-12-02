@@ -44,13 +44,12 @@ import static org.commonjava.indy.service.tracking.data.cassandra.CassandraFoloU
 import static org.commonjava.indy.service.tracking.data.cassandra.DtxTrackingRecord.fromCassandraRow;
 
 @ApplicationScoped
-public class CassandraTrackingQuery
-{
+public class CassandraTrackingQuery {
     private final static String DOWNLOADS = "DOWNLOAD";
 
     private final static String UPLOADS = "UPLOAD";
 
-    private final Logger logger = LoggerFactory.getLogger( getClass() );
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
     CassandraClient client;
@@ -76,362 +75,315 @@ public class CassandraTrackingQuery
 
     private PreparedStatement deleteTrackingRecordsByTrackingKey;
 
-    public CassandraTrackingQuery()
-    {
+    public CassandraTrackingQuery() {
     }
 
-    public CassandraTrackingQuery( CassandraClient client, CassandraConfiguration config )
-    {
+    public CassandraTrackingQuery(CassandraClient client, CassandraConfiguration config) {
         this.client = client;
         this.config = config;
         init();
     }
 
     @PostConstruct
-    public void init()
-    {
+    public void init() {
 
         String keySpace = config.getKeyspace();
 
-        session = client.getSession( keySpace );
-        logger.info( "Cassandra keyspace replicas configured: {}", config.getKeyspaceReplicas() );
-        session.execute( SchemaUtils.getSchemaCreateKeyspace( keySpace, config.getKeyspaceReplicas() ) );
-        session.execute( CassandraFoloUtil.getSchemaCreateTableFolo( keySpace ) );
-        session.execute( CassandraFoloUtil.getSchemaCreateTableFoloLegacy( keySpace ) );
+        session = client.getSession(keySpace);
+        logger.info("Cassandra keyspace replicas configured: {}", config.getKeyspaceReplicas());
+        session.execute(SchemaUtils.getSchemaCreateKeyspace(keySpace, config.getKeyspaceReplicas()));
+        session.execute(CassandraFoloUtil.getSchemaCreateTableFolo(keySpace));
+        session.execute(CassandraFoloUtil.getSchemaCreateTableFoloLegacy(keySpace));
 
-        MappingManager manager = new MappingManager( session );
+        MappingManager manager = new MappingManager(session);
 
-        trackingMapper = manager.mapper( DtxTrackingRecord.class, keySpace );
+        trackingMapper = manager.mapper(DtxTrackingRecord.class, keySpace);
 
-        getTrackingRecord = session.prepare( "SELECT * FROM " + keySpace + "." + TABLE_FOLO
-                                                             + " WHERE tracking_key=? AND store_key=? AND path=? AND store_effect=?;" );
-        getTrackingRecord.setConsistencyLevel( QUORUM );
+        getTrackingRecord = session.prepare(
+                "SELECT * FROM " + keySpace + "." + TABLE_FOLO
+                        + " WHERE tracking_key=? AND store_key=? AND path=? AND store_effect=?;");
+        getTrackingRecord.setConsistencyLevel(QUORUM);
 
-        getTrackingKeys = session.prepare( "SELECT distinct tracking_key FROM " + keySpace + "." + TABLE_FOLO + ";" );
-        getTrackingKeys.setConsistencyLevel( QUORUM );
+        getTrackingKeys = session.prepare("SELECT distinct tracking_key FROM " + keySpace + "." + TABLE_FOLO + ";");
+        getTrackingKeys.setConsistencyLevel(QUORUM);
 
-        getLegacyTrackingKeys = session.prepare(
-                        "SELECT distinct tracking_key FROM " + keySpace + "." + TABLE_FOLO_LEGACY + ";" );
+        getLegacyTrackingKeys = session
+                .prepare("SELECT distinct tracking_key FROM " + keySpace + "." + TABLE_FOLO_LEGACY + ";");
 
-        getTrackingRecordsByTrackingKey =
-                        session.prepare( "SELECT * FROM " + keySpace + "." + TABLE_FOLO + " WHERE tracking_key=?;" );
-        getTrackingRecordsByTrackingKey.setConsistencyLevel( QUORUM );
+        getTrackingRecordsByTrackingKey = session
+                .prepare("SELECT * FROM " + keySpace + "." + TABLE_FOLO + " WHERE tracking_key=?;");
+        getTrackingRecordsByTrackingKey.setConsistencyLevel(QUORUM);
 
-        getLegacyTrackingRecordsByTrackingKey = session.prepare(
-                        "SELECT * FROM " + keySpace + "." + TABLE_FOLO_LEGACY + " WHERE tracking_key=?;" );
-        getLegacyTrackingRecordsByTrackingKey.setConsistencyLevel( QUORUM );
+        getLegacyTrackingRecordsByTrackingKey = session
+                .prepare("SELECT * FROM " + keySpace + "." + TABLE_FOLO_LEGACY + " WHERE tracking_key=?;");
+        getLegacyTrackingRecordsByTrackingKey.setConsistencyLevel(QUORUM);
 
-        isTrackingRecordExist = session.prepare(
-                        "SELECT count(*) FROM " + keySpace + "." + TABLE_FOLO + " WHERE tracking_key=?;" );
+        isTrackingRecordExist = session
+                .prepare("SELECT count(*) FROM " + keySpace + "." + TABLE_FOLO + " WHERE tracking_key=?;");
 
-        deleteTrackingRecordsByTrackingKey =
-                        session.prepare( "DELETE FROM " + keySpace + "." + TABLE_FOLO + " WHERE tracking_key=?;" );
-        deleteTrackingRecordsByTrackingKey.setConsistencyLevel( QUORUM );
+        deleteTrackingRecordsByTrackingKey = session
+                .prepare("DELETE FROM " + keySpace + "." + TABLE_FOLO + " WHERE tracking_key=?;");
+        deleteTrackingRecordsByTrackingKey.setConsistencyLevel(QUORUM);
 
-        logger.info( "-- Cassandra Folo Records Keyspace and Tables created" );
+        logger.info("-- Cassandra Folo Records Keyspace and Tables created");
     }
 
-    public boolean recordArtifact( TrackedContentEntry entry ) throws ContentException, IndyWorkflowException
-    {
+    public boolean recordArtifact(TrackedContentEntry entry) throws ContentException, IndyWorkflowException {
 
         String buildId = entry.getTrackingKey().getId();
         String storeKey = entry.getStoreKey().toString();
         String path = entry.getPath();
         String effect = entry.getEffect().toString();
 
-        BoundStatement bind = getTrackingRecord.bind( buildId, storeKey, path, effect );
-        ResultSet trackingRecord = executeSession( bind );
+        BoundStatement bind = getTrackingRecord.bind(buildId, storeKey, path, effect);
+        ResultSet trackingRecord = executeSession(bind);
         Row one = trackingRecord.one();
 
-        if ( one != null )
-        {
-            DtxTrackingRecord dtxTrackingRecord = fromCassandraRow( one );
+        if (one != null) {
+            DtxTrackingRecord dtxTrackingRecord = fromCassandraRow(one);
             Boolean state = dtxTrackingRecord.getState();
-            if ( state )
-            {
-                throw new ContentException( "Tracking record: {} is already sealed!", entry.getTrackingKey() );
+            if (state) {
+                throw new ContentException("Tracking record: {} is already sealed!", entry.getTrackingKey());
             }
         }
         // Always override prev one since some builds may upload artifact more than once
-        DtxTrackingRecord dtxTrackingRecord = new DtxTrackingRecord( entry );
-        trackingMapper.save( dtxTrackingRecord ); //  optional Options with TTL, timestamp...
+        DtxTrackingRecord dtxTrackingRecord = new DtxTrackingRecord(entry);
+        trackingMapper.save(dtxTrackingRecord); // optional Options with TTL, timestamp...
         return true;
     }
 
-    public void delete( TrackingKey key )
-    {
-        logger.info( "Delete tracking records, tracking_id: {}", key.getId() );
-        BoundStatement bind = deleteTrackingRecordsByTrackingKey.bind( key.getId() );
-        executeSession( bind );
+    public void delete(TrackingKey key) {
+        logger.info("Delete tracking records, tracking_id: {}", key.getId());
+        BoundStatement bind = deleteTrackingRecordsByTrackingKey.bind(key.getId());
+        executeSession(bind);
     }
 
-    public void replaceTrackingRecord( TrackedContent record )
-    {
-        saveTrackedContentRecords( record );
+    public void replaceTrackingRecord(TrackedContent record) {
+        saveTrackedContentRecords(record);
     }
 
-    public boolean hasRecord( TrackingKey key )
-    {
-        BoundStatement bind = isTrackingRecordExist.bind( key );
-        ResultSet result = executeSession( bind );
+    public boolean hasRecord(TrackingKey key) {
+        BoundStatement bind = isTrackingRecordExist.bind(key);
+        ResultSet result = executeSession(bind);
         Row row = result.one();
         boolean exists = false;
-        if ( row != null )
-        {
-            long count = row.get( 0, Long.class );
+        if (row != null) {
+            long count = row.get(0, Long.class);
             exists = count > 0;
         }
-        logger.trace( "{} {}", key, ( exists ? "exists" : "not exists" ) );
+        logger.trace("{} {}", key, (exists ? "exists" : "not exists"));
         return exists;
     }
 
-    public TrackedContent get( TrackingKey key )
-    {
-        List<DtxTrackingRecord> trackingRecords = getDtxTrackingRecordsFromDb( key );
-        if ( trackingRecords == null || trackingRecords.isEmpty() )
-        {
+    public TrackedContent get(TrackingKey key) {
+        List<DtxTrackingRecord> trackingRecords = getDtxTrackingRecordsFromDb(key);
+        if (trackingRecords == null || trackingRecords.isEmpty()) {
             return null;
         }
-        return transformDtxTrackingRecordToTrackingContent( key, trackingRecords );
+        return transformDtxTrackingRecordToTrackingContent(key, trackingRecords);
     }
 
-    public TrackedContent seal( TrackingKey trackingKey )
-    {
-        List<DtxTrackingRecord> trackingRecords = getDtxTrackingRecordsFromDb( trackingKey );
+    public TrackedContent seal(TrackingKey trackingKey) {
+        List<DtxTrackingRecord> trackingRecords = getDtxTrackingRecordsFromDb(trackingKey);
 
-        if ( trackingRecords == null || trackingRecords.isEmpty() )
-        {
-            logger.debug( "Tracking record: {} doesn't exist! Returning empty record.", trackingKey );
-            return new TrackedContent( trackingKey, new HashSet<>(), new HashSet<>() );
+        if (trackingRecords == null || trackingRecords.isEmpty()) {
+            logger.debug("Tracking record: {} doesn't exist! Returning empty record.", trackingKey);
+            return new TrackedContent(trackingKey, new HashSet<>(), new HashSet<>());
         }
 
-        DtxTrackingRecord recordCheck = trackingRecords.get( 0 );
-        if ( recordCheck.getState() )
-        {
-            logger.debug( "Tracking record: {} already sealed! Returning sealed record.", trackingKey );
-            return transformDtxTrackingRecordToTrackingContent( trackingKey, trackingRecords );
+        DtxTrackingRecord recordCheck = trackingRecords.get(0);
+        if (recordCheck.getState()) {
+            logger.debug("Tracking record: {} already sealed! Returning sealed record.", trackingKey);
+            return transformDtxTrackingRecordToTrackingContent(trackingKey, trackingRecords);
         }
-        logger.debug( "Sealing record for: {}", trackingKey );
-        for ( DtxTrackingRecord record : trackingRecords )
-        {
-            record.setState( true );
-            trackingMapper.save( record );
+        logger.debug("Sealing record for: {}", trackingKey);
+        for (DtxTrackingRecord record : trackingRecords) {
+            record.setState(true);
+            trackingMapper.save(record);
         }
-        return transformDtxTrackingRecordToTrackingContent( trackingKey, trackingRecords );
+        return transformDtxTrackingRecordToTrackingContent(trackingKey, trackingRecords);
     }
 
-    public Set<TrackingKey> getInProgressTrackingKey()
-    {
+    public Set<TrackingKey> getInProgressTrackingKey() {
         throw new UnsupportedOperationException(
-                        "Getting in-progress tracking keys are not supported by Cassandra Folo" );
+                "Getting in-progress tracking keys are not supported by Cassandra Folo");
     }
 
-    public Set<TrackingKey> getSealedTrackingKey()
-    {
+    public Set<TrackingKey> getSealedTrackingKey() {
         return getTrackingKeys();
     }
 
     // This may fail given a huge dataset (oom). Only used for test purpose !
-    public Set<TrackedContent> getSealed()
-    {
+    public Set<TrackedContent> getSealed() {
 
         Set<TrackedContent> trackedContents = new HashSet<>();
         Set<TrackingKey> sealedTrackingKeys = getSealedTrackingKey();
 
-        for ( TrackingKey trackingKey : sealedTrackingKeys )
-        {
+        for (TrackingKey trackingKey : sealedTrackingKeys) {
 
-            List<DtxTrackingRecord> dtxTrackingRecordsFromDb = getDtxTrackingRecordsFromDb( trackingKey );
-            TrackedContent trackedContent =
-                            transformDtxTrackingRecordToTrackingContent( trackingKey, dtxTrackingRecordsFromDb );
+            List<DtxTrackingRecord> dtxTrackingRecordsFromDb = getDtxTrackingRecordsFromDb(trackingKey);
+            TrackedContent trackedContent = transformDtxTrackingRecordToTrackingContent(
+                    trackingKey,
+                    dtxTrackingRecordsFromDb);
 
-            trackedContents.add( trackedContent );
+            trackedContents.add(trackedContent);
         }
 
         return trackedContents;
     }
 
-    public void addSealedRecord( TrackedContent record )
-    {
-        saveTrackedContentRecords( record );
+    public void addSealedRecord(TrackedContent record) {
+        saveTrackedContentRecords(record);
     }
 
-    public void start() throws IndyLifecycleException
-    {
-        logger.info( "--- FoloRecordsCassandra starting up" );
+    public void start() throws IndyLifecycleException {
+        logger.info("--- FoloRecordsCassandra starting up");
     }
 
-    public int getStartupPriority()
-    {
+    public int getStartupPriority() {
         return 0;
     }
 
-    public String getId()
-    {
+    public String getId() {
         return "Folo2Cassandra";
     }
 
-    private TrackedContent transformDtxTrackingRecordToTrackingContent( TrackingKey trackingKey,
-                                                                        List<DtxTrackingRecord> trackingRecords )
-    {
+    private TrackedContent transformDtxTrackingRecordToTrackingContent(
+            TrackingKey trackingKey,
+            List<DtxTrackingRecord> trackingRecords) {
 
         List<TrackedContentEntry> records = new ArrayList<>();
 
-        for ( DtxTrackingRecord record : trackingRecords )
-        {
-            records.add( DtxTrackingRecord.toTrackingContentEntry( record ) );
+        for (DtxTrackingRecord record : trackingRecords) {
+            records.add(DtxTrackingRecord.toTrackingContentEntry(record));
         }
         Set<TrackedContentEntry> uploads = records.stream()
-                                                  .filter( record -> record.getEffect().toString().equals( UPLOADS ) )
-                                                  .collect( Collectors.toSet() );
+                .filter(record -> record.getEffect().toString().equals(UPLOADS))
+                .collect(Collectors.toSet());
 
-        //        logger.warn("-- Processing {} uploads  from  tracking key {} " ,  uploads.size() ,  trackingKey);
+        // logger.warn("-- Processing {} uploads from tracking key {} " , uploads.size() , trackingKey);
 
         Set<TrackedContentEntry> downloads = records.stream()
-                                                    .filter( record -> record.getEffect()
-                                                                             .toString()
-                                                                             .equals( DOWNLOADS ) )
-                                                    .collect( Collectors.toSet() );
+                .filter(record -> record.getEffect().toString().equals(DOWNLOADS))
+                .collect(Collectors.toSet());
 
-        //        logger.warn("-- Processing {} downloads  from  tracking key {} " ,  downloads.size() ,  trackingKey);
+        // logger.warn("-- Processing {} downloads from tracking key {} " , downloads.size() , trackingKey);
 
-        TrackedContent trackedContent = new TrackedContent( trackingKey, uploads, downloads );
+        TrackedContent trackedContent = new TrackedContent(trackingKey, uploads, downloads);
 
         return trackedContent;
 
     }
 
-    private List<DtxTrackingRecord> getLegacyDtxTrackingRecordsFromDb( TrackingKey trackingKey )
-    {
-        BoundStatement bind = getLegacyTrackingRecordsByTrackingKey.bind( trackingKey.getId() );
-        ResultSet execute = executeSession( bind );
+    private List<DtxTrackingRecord> getLegacyDtxTrackingRecordsFromDb(TrackingKey trackingKey) {
+        BoundStatement bind = getLegacyTrackingRecordsByTrackingKey.bind(trackingKey.getId());
+        ResultSet execute = executeSession(bind);
         List<Row> rows = execute.all();
-        return fetchRecordsFromRows( rows );
+        return fetchRecordsFromRows(rows);
     }
 
-    private List<DtxTrackingRecord> getDtxTrackingRecordsFromDb( TrackingKey trackingKey )
-    {
-        BoundStatement bind = getTrackingRecordsByTrackingKey.bind( trackingKey.getId() );
-        ResultSet execute = executeSession( bind );
+    private List<DtxTrackingRecord> getDtxTrackingRecordsFromDb(TrackingKey trackingKey) {
+        BoundStatement bind = getTrackingRecordsByTrackingKey.bind(trackingKey.getId());
+        ResultSet execute = executeSession(bind);
         List<Row> rows = execute.all();
-        return fetchRecordsFromRows( rows );
+        return fetchRecordsFromRows(rows);
     }
 
-    private List<DtxTrackingRecord> fetchRecordsFromRows( List<Row> rows )
-    {
+    private List<DtxTrackingRecord> fetchRecordsFromRows(List<Row> rows) {
         List<DtxTrackingRecord> trackingRecords = new ArrayList<>();
         Iterator<Row> iteratorDtxTrackingRecords = rows.iterator();
-        while ( iteratorDtxTrackingRecords.hasNext() )
-        {
+        while (iteratorDtxTrackingRecords.hasNext()) {
             Row next = iteratorDtxTrackingRecords.next();
             DtxTrackingRecord dtxTrackingRecord = new DtxTrackingRecord();
-            dtxTrackingRecord.setTrackingKey( next.getString( "tracking_key" ) );
-            dtxTrackingRecord.setState( next.getBool( "sealed" ) );
-            dtxTrackingRecord.setLocalUrl( next.getString( "local_url" ) );
-            dtxTrackingRecord.setOriginUrl( next.getString( "origin_url" ) );
-            dtxTrackingRecord.setTimestamps( next.getSet( "timestamps", Long.class ) );
-            dtxTrackingRecord.setPath( next.getString( "path" ) );
-            dtxTrackingRecord.setStoreEffect( next.getString( "store_effect" ) );
-            dtxTrackingRecord.setSha256( next.getString( "sha256" ) );
-            dtxTrackingRecord.setSha1( next.getString( "sha1" ) );
-            dtxTrackingRecord.setMd5( next.getString( "md5" ) );
-            dtxTrackingRecord.setSize( next.getLong( "size" ) );
-            dtxTrackingRecord.setStoreKey( next.getString( "store_key" ) );
-            dtxTrackingRecord.setAccessChannel( next.getString( "access_channel" ) );
-            trackingRecords.add( dtxTrackingRecord );
+            dtxTrackingRecord.setTrackingKey(next.getString("tracking_key"));
+            dtxTrackingRecord.setState(next.getBool("sealed"));
+            dtxTrackingRecord.setLocalUrl(next.getString("local_url"));
+            dtxTrackingRecord.setOriginUrl(next.getString("origin_url"));
+            dtxTrackingRecord.setTimestamps(next.getSet("timestamps", Long.class));
+            dtxTrackingRecord.setPath(next.getString("path"));
+            dtxTrackingRecord.setStoreEffect(next.getString("store_effect"));
+            dtxTrackingRecord.setSha256(next.getString("sha256"));
+            dtxTrackingRecord.setSha1(next.getString("sha1"));
+            dtxTrackingRecord.setMd5(next.getString("md5"));
+            dtxTrackingRecord.setSize(next.getLong("size"));
+            dtxTrackingRecord.setStoreKey(next.getString("store_key"));
+            dtxTrackingRecord.setAccessChannel(next.getString("access_channel"));
+            trackingRecords.add(dtxTrackingRecord);
         }
         return trackingRecords;
     }
 
-    private void saveTrackedContentRecords( TrackedContent record )
-    {
+    private void saveTrackedContentRecords(TrackedContent record) {
         Set<TrackedContentEntry> downloads = record.getDownloads();
         Set<TrackedContentEntry> uploads = record.getUploads();
         TrackingKey key = record.getKey();
 
-        for ( TrackedContentEntry downloadEntry : downloads )
-        {
-            DtxTrackingRecord downloadRecord = DtxTrackingRecord.fromTrackedContentEntry( downloadEntry, true );
-            trackingMapper.save( downloadRecord );
+        for (TrackedContentEntry downloadEntry : downloads) {
+            DtxTrackingRecord downloadRecord = DtxTrackingRecord.fromTrackedContentEntry(downloadEntry, true);
+            trackingMapper.save(downloadRecord);
         }
 
-        for ( TrackedContentEntry uploadEntry : uploads )
-        {
-            DtxTrackingRecord uploadRecord = DtxTrackingRecord.fromTrackedContentEntry( uploadEntry, true );
-            trackingMapper.save( uploadRecord );
+        for (TrackedContentEntry uploadEntry : uploads) {
+            DtxTrackingRecord uploadRecord = DtxTrackingRecord.fromTrackedContentEntry(uploadEntry, true);
+            trackingMapper.save(uploadRecord);
         }
     }
 
-    public TrackedContent getLegacy( TrackingKey key )
-    {
-        List<DtxTrackingRecord> trackingRecords = getLegacyDtxTrackingRecordsFromDb( key );
-        if ( trackingRecords == null || trackingRecords.isEmpty() )
-        {
+    public TrackedContent getLegacy(TrackingKey key) {
+        List<DtxTrackingRecord> trackingRecords = getLegacyDtxTrackingRecordsFromDb(key);
+        if (trackingRecords == null || trackingRecords.isEmpty()) {
             return null;
         }
-        return transformDtxTrackingRecordToTrackingContent( key, trackingRecords );
+        return transformDtxTrackingRecordToTrackingContent(key, trackingRecords);
     }
 
-    public Set<TrackingKey> getLegacyTrackingKeys()
-    {
+    public Set<TrackingKey> getLegacyTrackingKeys() {
         BoundStatement statement = getLegacyTrackingKeys.bind();
-        return getTrackingKeys( statement );
+        return getTrackingKeys(statement);
     }
 
-    private Set<TrackingKey> getTrackingKeys()
-    {
+    private Set<TrackingKey> getTrackingKeys() {
         BoundStatement statement = getTrackingKeys.bind();
-        return getTrackingKeys( statement );
+        return getTrackingKeys(statement);
     }
 
-    private Set<TrackingKey> getTrackingKeys( BoundStatement statement )
-    {
-        ResultSet resultSet = executeSession( statement );
+    private Set<TrackingKey> getTrackingKeys(BoundStatement statement) {
+        ResultSet resultSet = executeSession(statement);
         List<Row> all = resultSet.all();
         Iterator<Row> iterator = all.iterator();
 
         Set<TrackingKey> trackingKeys = new HashSet<>();
-        while ( iterator.hasNext() )
-        {
+        while (iterator.hasNext()) {
             Row next = iterator.next();
-            String tracking_key = next.getString( "tracking_key" );
-            trackingKeys.add( new TrackingKey( tracking_key ) );
+            String tracking_key = next.getString("tracking_key");
+            trackingKeys.add(new TrackingKey(tracking_key));
         }
-        return trackingKeys.stream().collect( Collectors.toSet() );
+        return trackingKeys.stream().collect(Collectors.toSet());
     }
 
-    public void createDtxTrackingRecord( DtxTrackingRecord trackingRecord )
-    {
-        trackingMapper.save( trackingRecord );
+    public void createDtxTrackingRecord(DtxTrackingRecord trackingRecord) {
+        trackingMapper.save(trackingRecord);
     }
 
-    private ResultSet executeSession ( BoundStatement bind )
-    {
+    private ResultSet executeSession(BoundStatement bind) {
         boolean exception = false;
         ResultSet trackingRecord = null;
-        try
-        {
-            if ( session == null || session.isClosed() )
-            {
+        try {
+            if (session == null || session.isClosed()) {
                 client.close();
                 client.init();
                 this.init();
             }
-            trackingRecord = session.execute( bind );
-        }
-        catch ( NoHostAvailableException e )
-        {
+            trackingRecord = session.execute(bind);
+        } catch (NoHostAvailableException e) {
             exception = true;
-            logger.error( "Cannot connect to host, reconnect once more with new session.", e );
-        }
-        finally
-        {
-            if ( exception )
-            {
+            logger.error("Cannot connect to host, reconnect once more with new session.", e);
+        } finally {
+            if (exception) {
                 client.close();
                 client.init();
                 this.init();
-                trackingRecord = session.execute( bind );
+                trackingRecord = session.execute(bind);
             }
         }
         return trackingRecord;

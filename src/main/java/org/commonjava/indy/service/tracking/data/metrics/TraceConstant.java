@@ -15,8 +15,7 @@
  */
 package org.commonjava.indy.service.tracking.data.metrics;
 
-public class TraceConstant
-{
+public class TraceConstant {
     public static final String DEFAULT = "default";
 
     public static final String EXCEPTION = "exception";

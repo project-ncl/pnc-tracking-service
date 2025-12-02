@@ -20,9 +20,7 @@ import org.commonjava.indy.service.tracking.model.StoreEffect;
 import org.commonjava.indy.service.tracking.model.StoreKey;
 import org.commonjava.indy.service.tracking.model.TrackingKey;
 
-public class ContentTransferDTO
-                implements Comparable<ContentTransferDTO>
-{
+public class ContentTransferDTO implements Comparable<ContentTransferDTO> {
     private StoreKey storeKey;
 
     private TrackingKey trackingKey;
@@ -35,162 +33,138 @@ public class ContentTransferDTO
 
     private StoreEffect effect;
 
-    public ContentTransferDTO()
-    {
+    public ContentTransferDTO() {
     }
 
-    public ContentTransferDTO( final StoreKey storeKey, final TrackingKey trackingKey,
-                               final AccessChannel accessChannel, final String path, final String originUrl,
-                               final StoreEffect effect )
-    {
+    public ContentTransferDTO(
+            final StoreKey storeKey,
+            final TrackingKey trackingKey,
+            final AccessChannel accessChannel,
+            final String path,
+            final String originUrl,
+            final StoreEffect effect) {
         this.storeKey = storeKey;
         this.trackingKey = trackingKey;
         this.accessChannel = accessChannel;
-        this.path = path.startsWith( "/" ) ? path : "/" + path;
+        this.path = path.startsWith("/") ? path : "/" + path;
         this.originUrl = originUrl;
         this.effect = effect;
     }
 
-    public String getOriginUrl()
-    {
+    public String getOriginUrl() {
         return originUrl;
     }
 
-    public void setOriginUrl( final String originUrl )
-    {
+    public void setOriginUrl(final String originUrl) {
         this.originUrl = originUrl;
     }
 
-    public StoreKey getStoreKey()
-    {
+    public StoreKey getStoreKey() {
         return storeKey;
     }
 
-    public void setStoreKey( final StoreKey storeKey )
-    {
+    public void setStoreKey(final StoreKey storeKey) {
         this.storeKey = storeKey;
     }
 
-    public TrackingKey getTrackingKey()
-    {
+    public TrackingKey getTrackingKey() {
         return trackingKey;
     }
 
-    public void setTrackingKey( TrackingKey trackingKey )
-    {
+    public void setTrackingKey(TrackingKey trackingKey) {
         this.trackingKey = trackingKey;
     }
 
-    public AccessChannel getAccessChannel()
-    {
+    public AccessChannel getAccessChannel() {
         return accessChannel;
     }
 
-    public void setAccessChannel( final AccessChannel accessChannel )
-    {
+    public void setAccessChannel(final AccessChannel accessChannel) {
         this.accessChannel = accessChannel;
     }
 
-    public String getPath()
-    {
+    public String getPath() {
         return path;
     }
 
-    public void setPath( final String path )
-    {
-        this.path = path.startsWith( "/" ) ? path : "/" + path;
+    public void setPath(final String path) {
+        this.path = path.startsWith("/") ? path : "/" + path;
     }
 
-    public StoreEffect getEffect()
-    {
+    public StoreEffect getEffect() {
         return this.effect;
     }
 
-    public void setEffect( final StoreEffect effect )
-    {
+    public void setEffect(final StoreEffect effect) {
         this.effect = effect;
     }
 
     @Override
-    public int compareTo( final ContentTransferDTO other )
-    {
-        int comp = storeKey.compareTo( other.getStoreKey() );
-        if ( comp == 0 )
-        {
-            comp = accessChannel.compareTo( other.getAccessChannel() );
+    public int compareTo(final ContentTransferDTO other) {
+        int comp = storeKey.compareTo(other.getStoreKey());
+        if (comp == 0) {
+            comp = accessChannel.compareTo(other.getAccessChannel());
         }
-        if ( comp == 0 )
-        {
-            comp = path.compareTo( other.getPath() );
+        if (comp == 0) {
+            comp = path.compareTo(other.getPath());
         }
 
         return comp;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ( ( path == null ) ? 0 : path.hashCode() );
-        result = prime * result + ( ( storeKey == null ) ? 0 : storeKey.hashCode() );
-        result = prime * result + ( ( accessChannel == null ) ? 0 : accessChannel.hashCode() );
+        result = prime * result + ((path == null) ? 0 : path.hashCode());
+        result = prime * result + ((storeKey == null) ? 0 : storeKey.hashCode());
+        result = prime * result + ((accessChannel == null) ? 0 : accessChannel.hashCode());
         return result;
     }
 
     @Override
-    public boolean equals( final Object obj )
-    {
-        if ( this == obj )
-        {
+    public boolean equals(final Object obj) {
+        if (this == obj) {
             return true;
         }
-        if ( obj == null )
-        {
+        if (obj == null) {
             return false;
         }
-        if ( getClass() != obj.getClass() )
-        {
+        if (getClass() != obj.getClass()) {
             return false;
         }
         final ContentTransferDTO other = (ContentTransferDTO) obj;
-        if ( path == null )
-        {
-            if ( other.path != null )
-            {
+        if (path == null) {
+            if (other.path != null) {
                 return false;
             }
-        }
-        else if ( !path.equals( other.path ) )
-        {
+        } else if (!path.equals(other.path)) {
             return false;
         }
-        if ( storeKey == null )
-        {
-            if ( other.storeKey != null )
-            {
+        if (storeKey == null) {
+            if (other.storeKey != null) {
                 return false;
             }
-        }
-        else if ( !storeKey.equals( other.storeKey ) )
-        {
+        } else if (!storeKey.equals(other.storeKey)) {
             return false;
         }
-        if ( accessChannel == null )
-        {
+        if (accessChannel == null) {
             return other.accessChannel == null;
         }
         // this is complicated by the transition from using MAVEN_REPO to NATIVE for non-proxy access channels.
         else
-            return accessChannel.equals( other.accessChannel );
+            return accessChannel.equals(other.accessChannel);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return String.format(
-                        "TrackedContentEntryDTO [\n  storeKey=%s\n  accessChannel=%s\n  path=%s\n  originUrl=%s\n  effect=%s\n]",
-                        storeKey, accessChannel, path, originUrl, effect );
+                "TrackedContentEntryDTO [\n  storeKey=%s\n  accessChannel=%s\n  path=%s\n  originUrl=%s\n  effect=%s\n]",
+                storeKey,
+                accessChannel,
+                path,
+                originUrl,
+                effect);
     }
 
 }

@@ -24,180 +24,154 @@ import java.util.Optional;
 
 import static java.util.Optional.of;
 
-@SuppressWarnings( { "OptionalUsedAsFieldOrParameterType", "unused" } )
+@SuppressWarnings({ "OptionalUsedAsFieldOrParameterType", "unused" })
 @Startup
 @ApplicationScoped
-public class CassandraConfiguration
-{
+public class CassandraConfiguration {
     @Inject
-    @ConfigProperty( name = "cassandra.enabled", defaultValue = "false" )
+    @ConfigProperty(name = "cassandra.enabled", defaultValue = "false")
     Boolean enabled;
 
     @Inject
-    @ConfigProperty( name = "cassandra.host", defaultValue = "localhost" )
+    @ConfigProperty(name = "cassandra.host", defaultValue = "localhost")
     String cassandraHost;
 
     @Inject
-    @ConfigProperty( name = "cassandra.port", defaultValue = "9402" )
+    @ConfigProperty(name = "cassandra.port", defaultValue = "9402")
     int cassandraPort;
 
     @Inject
-    @ConfigProperty( name = "cassandra.user" )
+    @ConfigProperty(name = "cassandra.user")
     Optional<String> cassandraUser;
 
     @Inject
-    @ConfigProperty( name = "cassandra.pass" )
+    @ConfigProperty(name = "cassandra.pass")
     Optional<String> cassandraPass;
 
     @Inject
-    @ConfigProperty( name = "cassandra.timeoutMillis.connect", defaultValue = "60000" )
+    @ConfigProperty(name = "cassandra.timeoutMillis.connect", defaultValue = "60000")
     int connectTimeoutMillis;
 
     @Inject
-    @ConfigProperty( name = "cassandra.timeoutMillis.read", defaultValue = "60000" )
+    @ConfigProperty(name = "cassandra.timeoutMillis.read", defaultValue = "60000")
     int readTimeoutMillis;
 
     @Inject
-    @ConfigProperty( name = "cassandra.retries.read", defaultValue = "3" )
+    @ConfigProperty(name = "cassandra.retries.read", defaultValue = "3")
     int readRetries;
 
     @Inject
-    @ConfigProperty( name = "cassandra.retries.write", defaultValue = "3" )
+    @ConfigProperty(name = "cassandra.retries.write", defaultValue = "3")
     int writeRetries;
 
     @Inject
-    @ConfigProperty( name = "cassandra.reconnect.delay", defaultValue = "60000" )
+    @ConfigProperty(name = "cassandra.reconnect.delay", defaultValue = "60000")
     long constantDelayMs;
 
     @Inject
-    @ConfigProperty( name = "cassandra.keyspace" )
+    @ConfigProperty(name = "cassandra.keyspace")
     Optional<String> keyspace;
 
     @Inject
-    @ConfigProperty( name = "cassandra.keyspaceReplicas", defaultValue = "0" )
+    @ConfigProperty(name = "cassandra.keyspaceReplicas", defaultValue = "0")
     int keyspaceReplicas;
 
-    public CassandraConfiguration()
-    {
+    public CassandraConfiguration() {
     }
 
-    public Boolean isEnabled()
-    {
+    public Boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled( Boolean enabled )
-    {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
-    public String getCassandraHost()
-    {
+    public String getCassandraHost() {
         return cassandraHost;
     }
 
-    public void setCassandraHost( String host )
-    {
+    public void setCassandraHost(String host) {
         cassandraHost = host;
     }
 
-    public Integer getCassandraPort()
-    {
+    public Integer getCassandraPort() {
         return cassandraPort;
     }
 
-    public void setCassandraPort( Integer port )
-    {
+    public void setCassandraPort(Integer port) {
         cassandraPort = port;
     }
 
-    public String getCassandraUser()
-    {
-        return cassandraUser.orElse( "" );
+    public String getCassandraUser() {
+        return cassandraUser.orElse("");
     }
 
-    public void setCassandraUser( String cassandraUser )
-    {
-        this.cassandraUser = of( cassandraUser );
+    public void setCassandraUser(String cassandraUser) {
+        this.cassandraUser = of(cassandraUser);
     }
 
-    public String getCassandraPass()
-    {
-        return cassandraPass.orElse( "" );
+    public String getCassandraPass() {
+        return cassandraPass.orElse("");
     }
 
-    public void setCassandraPass( String cassandraPass )
-    {
-        this.cassandraPass = of( cassandraPass );
+    public void setCassandraPass(String cassandraPass) {
+        this.cassandraPass = of(cassandraPass);
     }
 
-    public int getConnectTimeoutMillis()
-    {
+    public int getConnectTimeoutMillis() {
         return connectTimeoutMillis;
     }
 
-    public void setConnectTimeoutMillis( int connectTimeoutMillis )
-    {
+    public void setConnectTimeoutMillis(int connectTimeoutMillis) {
         this.connectTimeoutMillis = connectTimeoutMillis;
     }
 
-    public int getReadTimeoutMillis()
-    {
+    public int getReadTimeoutMillis() {
         return readTimeoutMillis;
     }
 
-    public void setReadTimeoutMillis( int readTimeoutMillis )
-    {
+    public void setReadTimeoutMillis(int readTimeoutMillis) {
         this.readTimeoutMillis = readTimeoutMillis;
     }
 
-    public int getReadRetries()
-    {
+    public int getReadRetries() {
         return readRetries;
     }
 
-    public void setReadRetries( int readRetries )
-    {
+    public void setReadRetries(int readRetries) {
         this.readRetries = readRetries;
     }
 
-    public int getWriteRetries()
-    {
+    public int getWriteRetries() {
         return writeRetries;
     }
 
-    public void setWriteRetries( int writeRetries )
-    {
+    public void setWriteRetries(int writeRetries) {
         this.writeRetries = writeRetries;
     }
 
-    public long getConstantDelayMs()
-    {
+    public long getConstantDelayMs() {
         return constantDelayMs;
     }
 
-    public void setConstantDelayMs( long constantDelayMs )
-    {
+    public void setConstantDelayMs(long constantDelayMs) {
         this.constantDelayMs = constantDelayMs;
     }
 
-    public String getKeyspace()
-    {
-        return keyspace.orElse( "" );
+    public String getKeyspace() {
+        return keyspace.orElse("");
     }
 
-    public void setKeyspace( String keyspace )
-    {
-        this.keyspace = of( keyspace );
+    public void setKeyspace(String keyspace) {
+        this.keyspace = of(keyspace);
     }
 
-    public int getKeyspaceReplicas()
-    {
+    public int getKeyspaceReplicas() {
         return keyspaceReplicas;
     }
 
-    public void setKeyspaceReplicas( int keyspaceReplicas )
-    {
+    public void setKeyspaceReplicas(int keyspaceReplicas) {
         this.keyspaceReplicas = keyspaceReplicas;
     }
 }

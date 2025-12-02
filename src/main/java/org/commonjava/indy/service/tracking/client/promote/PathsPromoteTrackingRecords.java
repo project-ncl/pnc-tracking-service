@@ -20,8 +20,7 @@ import org.commonjava.indy.service.tracking.model.StoreKey;
 import java.util.Map;
 import java.util.Set;
 
-public class PathsPromoteTrackingRecords
-{
+public class PathsPromoteTrackingRecords {
     private String trackingId; // user specified tracking id
 
     private Map<String, PathsPromoteResult> resultMap; // promotion uuid -> result

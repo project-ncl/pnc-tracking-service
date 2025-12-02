@@ -24,12 +24,11 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 
-@Path( "/api/promotion/admin" )
-@RegisterRestClient( configKey = "promote-service-api" )
-@RegisterProvider( CustomClientRequestFilter.class )
-public interface PromoteService
-{
+@Path("/api/promotion/admin")
+@RegisterRestClient(configKey = "promote-service-api")
+@RegisterProvider(CustomClientRequestFilter.class)
+public interface PromoteService {
     @GET
-    @Path( "/tracking/{trackingId}" )
-    Response getPromoteRecords( final @PathParam( "trackingId" ) String trackingId ) throws Exception;
+    @Path("/tracking/{trackingId}")
+    Response getPromoteRecords(final @PathParam("trackingId") String trackingId) throws Exception;
 }

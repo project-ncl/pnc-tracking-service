@@ -17,62 +17,44 @@ package org.commonjava.indy.service.tracking.exception;
 
 import java.text.MessageFormat;
 
-public class IndyLifecycleException
-                extends Exception
-{
+public class IndyLifecycleException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private Object[] params;
 
     private String formattedMessage;
 
-    public IndyLifecycleException( final String message, final Throwable cause, final Object... params )
-    {
-        super( message, cause );
+    public IndyLifecycleException(final String message, final Throwable cause, final Object... params) {
+        super(message, cause);
         this.params = params;
     }
 
-    public IndyLifecycleException( final String message, final Object... params )
-    {
-        super( message );
+    public IndyLifecycleException(final String message, final Object... params) {
+        super(message);
         this.params = params;
     }
 
     @Override
-    public synchronized String getMessage()
-    {
-        if ( formattedMessage == null )
-        {
-            final String format = super.getMessage().replaceAll( "\\{\\}", "%s" );
-            if ( params == null || params.length < 1 )
-            {
+    public synchronized String getMessage() {
+        if (formattedMessage == null) {
+            final String format = super.getMessage().replaceAll("\\{\\}", "%s");
+            if (params == null || params.length < 1) {
                 formattedMessage = format;
-            }
-            else
-            {
+            } else {
                 final String original = formattedMessage;
-                try
-                {
-                    formattedMessage = String.format( format, params );
-                }
-                catch ( final Error | Exception e )
-                {
+                try {
+                    formattedMessage = String.format(format, params);
+                } catch (final Error | Exception e) {
                     // do nothing
                 }
 
-                if ( formattedMessage == null || formattedMessage.equals( original ) )
-                {
-                    try
-                    {
-                        formattedMessage = MessageFormat.format( format, params );
-                    }
-                    catch ( final Error | RuntimeException e )
-                    {
+                if (formattedMessage == null || formattedMessage.equals(original)) {
+                    try {
+                        formattedMessage = MessageFormat.format(format, params);
+                    } catch (final Error | RuntimeException e) {
                         formattedMessage = format;
                         throw e;
-                    }
-                    catch ( final Exception e )
-                    {
+                    } catch (final Exception e) {
                         formattedMessage = format;
                     }
                 }
@@ -82,13 +64,11 @@ public class IndyLifecycleException
         return formattedMessage;
     }
 
-    private Object writeReplace()
-    {
+    private Object writeReplace() {
         final Object[] newParams = new Object[params.length];
         int i = 0;
-        for ( final Object object : params )
-        {
-            newParams[i] = String.valueOf( object );
+        for (final Object object : params) {
+            newParams[i] = String.valueOf(object);
             i++;
         }
 

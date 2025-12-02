@@ -15,8 +15,7 @@
  */
 package org.commonjava.indy.service.tracking;
 
-public class Constants
-{
+public class Constants {
 
     public static final String TRACKING_KEY = "tracking-id";
 
@@ -28,19 +27,16 @@ public class Constants
 
     public static final String ORIGIN_PATH = "origin-path";
 
-    public enum TRACKING_TYPE
-    {
-        IN_PROGRESS( "in_progress" ), SEALED( "sealed" );
+    public enum TRACKING_TYPE {
+        IN_PROGRESS("in_progress"), SEALED("sealed");
 
         private final String value;
 
-        TRACKING_TYPE( String value )
-        {
+        TRACKING_TYPE(String value) {
             this.value = value;
         }
 
-        public String getValue()
-        {
+        public String getValue() {
             return value;
         }
     }

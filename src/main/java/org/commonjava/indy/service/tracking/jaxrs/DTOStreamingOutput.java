@@ -31,9 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.commonjava.indy.service.tracking.data.metrics.NameUtils.getDefaultName;
 import static org.commonjava.indy.service.tracking.data.metrics.NameUtils.getName;
 
-public class DTOStreamingOutput
-                implements StreamingOutput
-{
+public class DTOStreamingOutput implements StreamingOutput {
     private static final String TRANSFER_METRIC_NAME = "indy.transferred.dto";
 
     private static final double NANOS_PER_SEC = 1000000000.0;
@@ -44,68 +42,55 @@ public class DTOStreamingOutput
 
     private final TraceManager traceManager;
 
-    public DTOStreamingOutput( final ObjectMapper mapper, final Object dto, final TraceManager traceManager )
-    {
+    public DTOStreamingOutput(final ObjectMapper mapper, final Object dto, final TraceManager traceManager) {
         this.mapper = mapper;
         this.dto = dto;
         this.traceManager = traceManager;
     }
 
     @Override
-    public String toString()
-    {
-        try
-        {
-            return mapper.writeValueAsString( dto );
-        }
-        catch ( JsonProcessingException e )
-        {
-            Logger logger = LoggerFactory.getLogger( getClass() );
-            logger.error( "Could not render toString() for DTO: " + dto, e );
-            return String.valueOf( dto );
+    public String toString() {
+        try {
+            return mapper.writeValueAsString(dto);
+        } catch (JsonProcessingException e) {
+            Logger logger = LoggerFactory.getLogger(getClass());
+            logger.error("Could not render toString() for DTO: " + dto, e);
+            return String.valueOf(dto);
         }
     }
 
     @Override
-    public void write( final OutputStream outputStream ) throws IOException, WebApplicationException
-    {
+    public void write(final OutputStream outputStream) throws IOException, WebApplicationException {
         AtomicReference<IOException> ioe = new AtomicReference<>();
-        traceManager.wrapWithStandardMetrics( ( span ) -> {
-            CountingOutputStream cout = new CountingOutputStream( outputStream );
+        traceManager.wrapWithStandardMetrics((span) -> {
+            CountingOutputStream cout = new CountingOutputStream(outputStream);
             long start = System.nanoTime();
-            try
-            {
-                mapper.writeValue( cout, dto );
-            }
-            catch ( IOException e )
-            {
-                ioe.set( e );
-            }
-            finally
-            {
-                Logger logger = LoggerFactory.getLogger( getClass() );
-                logger.trace( "Wrote: {} bytes", cout.getByteCount() );
+            try {
+                mapper.writeValue(cout, dto);
+            } catch (IOException e) {
+                ioe.set(e);
+            } finally {
+                Logger logger = LoggerFactory.getLogger(getClass());
+                logger.trace("Wrote: {} bytes", cout.getByteCount());
 
-                String name = getName( TRANSFER_METRIC_NAME, getDefaultName( dto.getClass(), "write" ), "size" );
+                String name = getName(TRANSFER_METRIC_NAME, getDefaultName(dto.getClass(), "write"), "size");
 
                 long end = System.nanoTime();
-                double elapsed = ( end - start ) / NANOS_PER_SEC;
+                double elapsed = (end - start) / NANOS_PER_SEC;
 
-                span.setAttribute( name, Math.round( cout.getByteCount() / elapsed ) );
+                span.setAttribute(name, Math.round(cout.getByteCount() / elapsed));
             }
 
             return null;
 
-        }, () -> TRANSFER_METRIC_NAME );
+        }, () -> TRANSFER_METRIC_NAME);
 
-        if ( ioe.get() != null )
-        {
+        if (ioe.get() != null) {
             throw ioe.get();
         }
     }
 
-    public Object getDto()
-    {
+    public Object getDto() {
         return dto;
     }
 }

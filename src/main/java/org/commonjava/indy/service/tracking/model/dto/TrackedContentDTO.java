@@ -22,81 +22,73 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.util.Set;
 
-@Schema( type = SchemaType.OBJECT, discriminatorProperty = "type", description = "Representation of a simple boolean result of query, like if the stores data is empty" )
-public class TrackedContentDTO
-{
+@Schema(
+        type = SchemaType.OBJECT,
+        discriminatorProperty = "type",
+        description = "Representation of a simple boolean result of query, like if the stores data is empty")
+public class TrackedContentDTO {
 
     @JsonProperty
-    @Schema( description = "The description for this boolean result" )
+    @Schema(description = "The description for this boolean result")
     private TrackingKey key;
 
     private Set<TrackedContentEntryDTO> uploads;
 
     private Set<TrackedContentEntryDTO> downloads;
 
-    public TrackedContentDTO()
-    {
+    public TrackedContentDTO() {
     }
 
-    public TrackedContentDTO( final TrackingKey key, final Set<TrackedContentEntryDTO> uploads,
-                              final Set<TrackedContentEntryDTO> downloads )
-    {
+    public TrackedContentDTO(
+            final TrackingKey key,
+            final Set<TrackedContentEntryDTO> uploads,
+            final Set<TrackedContentEntryDTO> downloads) {
         this.key = key;
         this.uploads = uploads;
         this.downloads = downloads;
     }
 
-    public TrackingKey getKey()
-    {
+    public TrackingKey getKey() {
         return key;
     }
 
-    public void setKey( final TrackingKey key )
-    {
+    public void setKey(final TrackingKey key) {
         this.key = key;
     }
 
-    public Set<TrackedContentEntryDTO> getUploads()
-    {
+    public Set<TrackedContentEntryDTO> getUploads() {
         return uploads;
     }
 
-    public void setUploads( final Set<TrackedContentEntryDTO> uploads )
-    {
+    public void setUploads(final Set<TrackedContentEntryDTO> uploads) {
         this.uploads = uploads;
     }
 
-    public Set<TrackedContentEntryDTO> getDownloads()
-    {
+    public Set<TrackedContentEntryDTO> getDownloads() {
         return downloads;
     }
 
-    public void setDownloads( final Set<TrackedContentEntryDTO> downloads )
-    {
+    public void setDownloads(final Set<TrackedContentEntryDTO> downloads) {
         this.downloads = downloads;
     }
 
     @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if ( !( o instanceof TrackedContentDTO ) )
-        {
+        if (!(o instanceof TrackedContentDTO)) {
             return false;
         }
 
         TrackedContentDTO that = (TrackedContentDTO) o;
 
-        return getKey() != null ? getKey().equals( that.getKey() ) : that.getKey() == null;
+        return getKey() != null ? getKey().equals(that.getKey()) : that.getKey() == null;
 
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return getKey() != null ? getKey().hashCode() : 0;
     }
 }

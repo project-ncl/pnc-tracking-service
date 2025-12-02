@@ -24,22 +24,21 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.io.File;
 
 @Startup
-@ConfigMapping( prefix = "tracking" )
+@ConfigMapping(prefix = "tracking")
 @ApplicationScoped
-public interface IndyTrackingConfiguration
-{
-    @WithName( "baseDir" )
+public interface IndyTrackingConfiguration {
+    @WithName("baseDir")
     File baseDir();
 
-    @WithName( "content-service.url" )
+    @WithName("content-service.url")
     String contentServiceURL();
 
-    @WithName( "track.group.content" )
-    @WithDefault( "true" )
+    @WithName("track.group.content")
+    @WithDefault("true")
     Boolean trackGroupContent();
 
-    @WithName( "deletionAdditionalGuardCheck" )
-    @WithDefault( "false" )
+    @WithName("deletionAdditionalGuardCheck")
+    @WithDefault("false")
     Boolean deletionAdditionalGuardCheck();
 
 }

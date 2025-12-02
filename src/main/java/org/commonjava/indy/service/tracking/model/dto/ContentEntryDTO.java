@@ -26,92 +26,76 @@ import java.io.ObjectOutput;
 
 import static org.commonjava.indy.service.tracking.model.pkg.PackageTypeConstants.PKG_TYPE_MAVEN;
 
-public class ContentEntryDTO
-                implements Comparable<ContentEntryDTO>, Externalizable
-{
+public class ContentEntryDTO implements Comparable<ContentEntryDTO>, Externalizable {
     private static final int VERSION = 1;
 
     private StoreKey storeKey;
 
     private String path;
 
-    public StoreKey getStoreKey()
-    {
+    public StoreKey getStoreKey() {
         return storeKey;
     }
 
-    public void setStoreKey( StoreKey storeKey )
-    {
+    public void setStoreKey(StoreKey storeKey) {
         this.storeKey = storeKey;
     }
 
-    public String getPath()
-    {
+    public String getPath() {
         return path;
     }
 
-    public void setPath( String path )
-    {
+    public void setPath(String path) {
         this.path = path;
     }
 
     @Override
-    public int compareTo( final ContentEntryDTO other )
-    {
-        int comp = storeKey.compareTo( other.getStoreKey() );
-        if ( comp == 0 )
-        {
-            comp = path.compareTo( other.getPath() );
+    public int compareTo(final ContentEntryDTO other) {
+        int comp = storeKey.compareTo(other.getStoreKey());
+        if (comp == 0) {
+            comp = path.compareTo(other.getPath());
         }
         return comp;
     }
 
     @Override
-    public void writeExternal( ObjectOutput out ) throws IOException
-    {
-        out.writeObject( Integer.toString( VERSION ) );
-        out.writeObject( storeKey.getPackageType() );
-        out.writeObject( storeKey.getName() );
-        out.writeObject( storeKey.getType().name() );
-        out.writeObject( path == null ? "" : path );
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(Integer.toString(VERSION));
+        out.writeObject(storeKey.getPackageType());
+        out.writeObject(storeKey.getName());
+        out.writeObject(storeKey.getType().name());
+        out.writeObject(path == null ? "" : path);
 
     }
 
     @Override
-    public void readExternal( ObjectInput in ) throws IOException, ClassNotFoundException
-    {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         Object whatIsThis = in.readObject();
         int version;
         String packageType;
-        if ( whatIsThis == null )
-        {
+        if (whatIsThis == null) {
             // we see NumberFormatException: For input string: "null" in parseInt. It might be because we forget
             // to persist the trackingKey for some reason. In this case, we just ignore it and continues
             version = 1;
             packageType = PKG_TYPE_MAVEN;
-        }
-        else if ( whatIsThis instanceof TrackingKey )
-        {
+        } else if (whatIsThis instanceof TrackingKey) {
             version = 1;
             packageType = PKG_TYPE_MAVEN;
-        }
-        else
-        {
-            version = Integer.parseInt( String.valueOf( whatIsThis ) );
+        } else {
+            version = Integer.parseInt(String.valueOf(whatIsThis));
             packageType = (String) in.readObject();
         }
         // TODO: We should make future versioning / deserialization decisions based on the version we read / infer above
-        if ( version > VERSION )
-        {
-            throw new IOException( "This class is of an older version: " + VERSION
-                                                   + " vs. the version read from the data stream: " + version
-                                                   + ". Cannot deserialize." );
+        if (version > VERSION) {
+            throw new IOException(
+                    "This class is of an older version: " + VERSION + " vs. the version read from the data stream: "
+                            + version + ". Cannot deserialize.");
         }
         final String storeKeyName = (String) in.readObject();
-        final StoreType storeType = StoreType.get( (String) in.readObject() );
-        storeKey = new StoreKey( packageType, storeType, storeKeyName );
+        final StoreType storeType = StoreType.get((String) in.readObject());
+        storeKey = new StoreKey(packageType, storeType, storeKeyName);
         final String pathStr = (String) in.readObject();
-        path = "".equals( pathStr ) ? null : pathStr;
+        path = "".equals(pathStr) ? null : pathStr;
 
     }
 }

@@ -27,17 +27,16 @@ import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Set;
 
-@Path( "/api/admin/content" )
-@RegisterRestClient( configKey = "content-service-api" )
-@RegisterProvider( CustomClientRequestFilter.class )
-public interface ContentService
-{
+@Path("/api/admin/content")
+@RegisterRestClient(configKey = "content-service-api")
+@RegisterProvider(CustomClientRequestFilter.class)
+public interface ContentService {
     @POST
-    @Path( "/tracking/recalculate" )
-    Response recalculateEntrySet( final Set<ContentTransferDTO> entries );
+    @Path("/tracking/recalculate")
+    Response recalculateEntrySet(final Set<ContentTransferDTO> entries);
 
     @POST
-    @Path( "/repo/zip" )
-    File getZipRepository( final ContentDTO dto );
+    @Path("/repo/zip")
+    File getZipRepository(final ContentDTO dto);
 
 }
