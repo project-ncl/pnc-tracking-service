@@ -1,10 +1,12 @@
-# Indy Tracking Service
+# PNC Tracking Service
 
-Service for tracking content access events and allowing retrieval of that data
+Service for tracking content access events and allowing retrieval of that data.
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
 If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+
+Kudos to the Indy team for working on this service before PNC forked it.
 
 ## Running the application in dev mode
 
