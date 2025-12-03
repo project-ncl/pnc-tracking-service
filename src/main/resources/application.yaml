@@ -3,7 +3,7 @@ quarkus:
   package:
     type: uber-jar
   application:
-    name: "indy-tracking-service"
+    name: "pnc-tracking-service"
   oidc:
     enabled: true
     auth-server-url: "https://localhost:8543/realms/indy"
@@ -29,13 +29,13 @@ quarkus:
     log:
       level: INFO
       category:
-        "org.commonjava.indy.service.tracking":
+        "org.jboss.pnc.service.tracking":
           level: TRACE
       console:
         enable: true
       file:
         enable: true
-        path: "/tmp/indy-tracking-service.log"
+        path: "/tmp/pnc-tracking-service.log"
         format: "%d{HH:mm:ss} %-5p [%c{2.}] (%t) %s%e%n"
         rotation:
           max-backup-index: 5
@@ -65,14 +65,14 @@ quarkus:
           connector: smallrye-kafka
           topic: promote-complete
           value:
-            deserializer: org.commonjava.indy.service.tracking.handler.PathsPromoteCompleteEventDeserializer
+            deserializer: org.jboss.pnc.service.tracking.handler.PathsPromoteCompleteEventDeserializer
 
 "%test":
   quarkus:
     log:
       level: INFO
       category:
-        "org.commonjava.indy.service.tracking":
+        "org.jboss.pnc.service.tracking":
           level: DEBUG
       console:
         enable: true
